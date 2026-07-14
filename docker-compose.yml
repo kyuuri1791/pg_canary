@@ -1,0 +1,15 @@
+services:
+  db:
+    image: postgres:16
+    environment:
+      # Note: role names starting with "pg_" are reserved by PostgreSQL
+      POSTGRES_USER: canary
+      POSTGRES_PASSWORD: canary
+      POSTGRES_DB: pg_canary_test
+    ports:
+      - "${PG_CANARY_DB_PORT:-5432}:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U canary -d pg_canary_test"]
+      interval: 2s
+      timeout: 2s
+      retries: 15

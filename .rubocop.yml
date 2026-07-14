@@ -1,0 +1,32 @@
+AllCops:
+  TargetRubyVersion: 3.1
+  NewCops: enable
+  SuggestExtensions: false
+Style/StringLiterals:
+  EnforcedStyle: double_quotes
+Style/StringLiteralsInInterpolation:
+  EnforcedStyle: double_quotes
+Metrics/AbcSize:
+  Enabled: false
+Metrics/CyclomaticComplexity:
+  Enabled: false
+Metrics/PerceivedComplexity:
+  Enabled: false
+Metrics/MethodLength:
+  Max: 35
+  Exclude:
+    - "spec/**/*"
+Metrics/ClassLength:
+  Max: 200
+Metrics/ModuleLength:
+  Max: 150
+Metrics/BlockLength:
+  Exclude:
+    - "spec/**/*"
+    - "*.gemspec"
+Naming/PredicateMethod:
+  Enabled: false
+Metrics/ParameterLists:
+  CountKeywordArgs: false
+Style/Documentation:
+  Enabled: false

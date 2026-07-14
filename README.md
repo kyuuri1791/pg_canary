@@ -2,6 +2,8 @@
 
 pg_canary watches the SQL your Rails app executes in development/test and warns about anti-patterns that can become slow queries in production: leading-wildcard `LIKE`s without a trigram index, function-wrapped columns in `WHERE`, `ORDER BY RANDOM()`, `NOT IN (SELECT ...)`, and more. PostgreSQL only.
 
+![pg_canary detecting a leading-wildcard LIKE query](demo.png)
+
 ## Installation
 
 ```ruby

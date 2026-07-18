@@ -11,10 +11,6 @@ module PgCanary
         true
       end
 
-      def size_dependent?
-        false
-      end
-
       def self.options
         { threshold: 1000 }
       end

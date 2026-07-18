@@ -10,10 +10,6 @@ module PgCanary
         true
       end
 
-      def size_dependent?
-        false
-      end
-
       INTEGER_TYPES = %w[smallint integer bigint].freeze
       NUMERIC_TYPE_NAMES = %w[numeric decimal float4 float8].freeze
 

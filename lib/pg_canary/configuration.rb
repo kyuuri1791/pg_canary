@@ -8,7 +8,7 @@ module PgCanary
     attr_accessor :enabled
 
     # False-positive controls
-    attr_accessor :ignore_tables, :table_size_hints, :size_rule_threshold
+    attr_accessor :ignore_tables
 
     attr_accessor :logger, :app_root
     attr_reader :rules
@@ -16,8 +16,6 @@ module PgCanary
     def initialize
       @enabled = nil
       @ignore_tables = %w[schema_migrations ar_internal_metadata]
-      @table_size_hints = {}
-      @size_rule_threshold = 10_000
       @rules = RulesConfig.new
       @logger = nil
       @app_root = nil
@@ -25,16 +23,6 @@ module PgCanary
 
     def ignore_table?(table)
       table && ignore_tables.map(&:to_s).include?(table.to_s)
-    end
-
-    # Whether a size-dependent (Tier 2) rule should look at this table.
-    # With no hints configured, every table qualifies (which is exactly why
-    # Tier 2 rules are opt-in).
-    def size_hint_allows?(table)
-      hints = table_size_hints || {}
-      return true if hints.empty?
-
-      hints[table.to_s].to_i >= size_rule_threshold
     end
   end
 

@@ -47,22 +47,4 @@ RSpec.describe PgCanary::Rules::UnindexedWhere do
 
     expect(detections).to be_empty
   end
-
-  it "only checks tables hinted as large when table_size_hints is set" do
-    PgCanary.config.table_size_hints = { "users" => 1_000_000 }
-
-    hinted = detections_for { User.where(name: "taro").to_a }
-    unhinted = detections_for { Order.where(status: "paid").to_a }
-
-    expect(hinted.map(&:rule_name)).to eq([:unindexed_where])
-    expect(unhinted).to be_empty
-  end
-
-  it "respects size_rule_threshold" do
-    PgCanary.config.table_size_hints = { "users" => 100 }
-
-    detections = detections_for { User.where(name: "taro").to_a }
-
-    expect(detections).to be_empty
-  end
 end

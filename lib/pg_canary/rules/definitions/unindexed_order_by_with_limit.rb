@@ -4,16 +4,12 @@ module PgCanary
   module Rules
     # Tier 2 (opt-in): ORDER BY x LIMIT n without an index led by x forces a
     # full sort before the limit can apply. Size-dependent, so disabled by
-    # default and gated by config.table_size_hints.
+    # default.
     class UnindexedOrderByWithLimit < Base
       include IndexPredicates
 
       def default_enabled
         false
-      end
-
-      def size_dependent?
-        true
       end
 
       def check(query)

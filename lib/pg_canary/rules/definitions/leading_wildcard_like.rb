@@ -13,10 +13,6 @@ module PgCanary
         true
       end
 
-      def size_dependent?
-        false
-      end
-
       LIKE_KINDS = %i[AEXPR_LIKE AEXPR_ILIKE].freeze
 
       def check(query)

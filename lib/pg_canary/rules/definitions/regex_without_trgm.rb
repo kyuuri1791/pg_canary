@@ -12,10 +12,6 @@ module PgCanary
         true
       end
 
-      def size_dependent?
-        false
-      end
-
       REGEX_OPS = %w[~ ~* !~ !~*].freeze
 
       def check(query)

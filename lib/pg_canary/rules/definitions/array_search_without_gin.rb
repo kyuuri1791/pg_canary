@@ -11,10 +11,6 @@ module PgCanary
         true
       end
 
-      def size_dependent?
-        false
-      end
-
       ARRAY_OPS = %w[@> <@ &&].freeze
 
       def check(query)

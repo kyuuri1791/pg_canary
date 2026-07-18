@@ -42,23 +42,14 @@ module PgCanary
         raise NotImplementedError, "#{self.class} must declare #default_enabled (true for Tier 1, false for Tier 2)"
       end
 
-      def size_dependent?
-        raise NotImplementedError, "#{self.class} must declare #size_dependent?"
-      end
-
       private
 
       def rule_config(query)
         query.config.rules[self.class.rule_name]
       end
 
-      # Tier 2 gate: with size hints configured, only tables hinted as large
-      # are checked.
       def applicable_table?(query, table)
-        return false if query.config.ignore_table?(table)
-        return true unless size_dependent?
-
-        query.config.size_hint_allows?(table)
+        !query.config.ignore_table?(table)
       end
 
       def detection(query, message:, suggestion: nil, table: nil, columns: nil)

@@ -11,10 +11,6 @@ module PgCanary
         false
       end
 
-      def size_dependent?
-        false
-      end
-
       def self.options
         { max_joins: 8, max_depth: 4 }
       end

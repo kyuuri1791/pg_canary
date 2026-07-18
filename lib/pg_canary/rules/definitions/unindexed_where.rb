@@ -5,14 +5,10 @@ module PgCanary
     # Tier 2 (opt-in): equality/range predicates on columns with no index
     # whose leading column could serve them. Depends on production table
     # size — a 30-row lookup table is fine without indexes — hence disabled
-    # by default and gated by config.table_size_hints.
+    # by default.
     class UnindexedWhere < Base
       def default_enabled
         false
-      end
-
-      def size_dependent?
-        true
       end
 
       def check(query)

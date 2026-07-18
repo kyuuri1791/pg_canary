@@ -11,10 +11,6 @@ module PgCanary
         false
       end
 
-      def size_dependent?
-        false
-      end
-
       def check(query)
         union = query.scopes.find { |scope| scope.stmt.op == :SETOP_UNION && !scope.stmt.all }
         return [] unless union

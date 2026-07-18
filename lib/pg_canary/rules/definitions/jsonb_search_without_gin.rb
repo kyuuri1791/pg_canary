@@ -14,10 +14,6 @@ module PgCanary
         true
       end
 
-      def size_dependent?
-        false
-      end
-
       CONTAINMENT_OPS = %w[@> <@ ? ?| ?&].freeze
       EXTRACTION_OPS = %w[-> ->> #> #>>].freeze
 

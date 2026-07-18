@@ -10,10 +10,6 @@ module PgCanary
         true
       end
 
-      def size_dependent?
-        false
-      end
-
       def check(query)
         detections = []
         query.each_scope do |scope|

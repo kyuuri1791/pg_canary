@@ -11,10 +11,6 @@ module PgCanary
         true
       end
 
-      def size_dependent?
-        false
-      end
-
       CHECKED_KINDS = %i[AEXPR_OP AEXPR_LIKE AEXPR_ILIKE AEXPR_IN AEXPR_BETWEEN].freeze
 
       def check(query)

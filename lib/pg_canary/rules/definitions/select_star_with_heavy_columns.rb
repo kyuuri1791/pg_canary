@@ -11,10 +11,6 @@ module PgCanary
         false
       end
 
-      def size_dependent?
-        false
-      end
-
       def self.options
         { heavy_types: %w[bytea jsonb text].freeze }
       end

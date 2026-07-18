@@ -9,31 +9,31 @@ module PgCanary
 
       private
 
-      def trgm_index?(query, table, column)
-        query.indexes(table).any? do |index|
-          TRGM_ACCESS_METHODS.include?(index.using) &&
-            index.columns.include?(column) &&
-            index.opclasses[column].to_s.include?("trgm")
+        def trgm_index?(query, table, column)
+          query.indexes(table).any? do |index|
+            TRGM_ACCESS_METHODS.include?(index.using) &&
+              index.columns.include?(column) &&
+              index.opclasses[column].to_s.include?("trgm")
+          end
         end
-      end
 
-      def gin_index_on?(query, table, column)
-        query.indexes(table).any? { |index| index.using == "gin" && index.columns.include?(column) }
-      end
-
-      # Any expression index whose expression mentions the column.
-      # Deliberately loose (column-level word match, not expression
-      # equality) to avoid false positives.
-      def expression_index_referencing?(query, table, column)
-        query.indexes(table).any? do |index|
-          index.expressions&.match?(/\b#{Regexp.escape(column)}\b/)
+        def gin_index_on?(query, table, column)
+          query.indexes(table).any? { |index| index.using == "gin" && index.columns.include?(column) }
         end
-      end
 
-      # Whether any index's leading column is +column+ (leftmost-prefix rule).
-      def index_leading_with?(query, table, column)
-        query.indexes(table).any? { |index| index.leading_column == column }
-      end
+        # Any expression index whose expression mentions the column.
+        # Deliberately loose (column-level word match, not expression
+        # equality) to avoid false positives.
+        def expression_index_referencing?(query, table, column)
+          query.indexes(table).any? do |index|
+            index.expressions&.match?(/\b#{Regexp.escape(column)}\b/)
+          end
+        end
+
+        # Whether any index's leading column is +column+ (leftmost-prefix rule).
+        def index_leading_with?(query, table, column)
+          query.indexes(table).any? { |index| index.leading_column == column }
+        end
     end
   end
 end

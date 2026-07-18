@@ -39,56 +39,56 @@ module PgCanary
 
     private
 
-    # nil for anything that is not a plain SELECT (or fails to parse).
-    def build_query(payload)
-      parse_result = PgQuery.parse(payload[:sql])
-      stmt = unwrap_node(parse_result.tree.stmts.first&.stmt)
-      return nil unless stmt.is_a?(PgQuery::SelectStmt)
+      # nil for anything that is not a plain SELECT (or fails to parse).
+      def build_query(payload)
+        parse_result = PgQuery.parse(payload[:sql])
+        stmt = unwrap_node(parse_result.tree.stmts.first&.stmt)
+        return nil unless stmt.is_a?(PgQuery::SelectStmt)
 
-      Rules::QueryContext.new(
-        sql: payload[:sql],
-        connection: payload[:connection],
-        parse_result: parse_result,
-        config: @config,
-        binds: payload[:binds],
-        type_casted_binds: payload[:type_casted_binds]
-      )
-    rescue PgQuery::ParseError
-      nil
-    end
-
-    def check_rule(rule, query)
-      rule.check(query).reject { |d| ignored?(d, query) }
-    rescue StandardError => e
-      PgCanary.internal_error(e)
-      []
-    end
-
-    def ignored?(detection, query)
-      config = query.config
-      return true if config.ignore_table?(detection.table)
-
-      # Table-less detections (e.g. ORDER BY RANDOM() over a subquery) are
-      # dropped when every table in the query is ignored.
-      if detection.table.nil?
-        tables = query.tables
-        return tables.any? && tables.all? { |t| config.ignore_table?(t) }
+        Rules::QueryContext.new(
+          sql: payload[:sql],
+          connection: payload[:connection],
+          parse_result: parse_result,
+          config: @config,
+          binds: payload[:binds],
+          type_casted_binds: payload[:type_casted_binds]
+        )
+      rescue PgQuery::ParseError
+        nil
       end
 
-      false
-    end
-
-    def build_backtrace_cleaner(root)
-      ActiveSupport::BacktraceCleaner.new.tap do |cleaner|
-        cleaner.add_silencer { |line| line.include?("lib/pg_canary") }
-        cleaner.add_filter { |line| line.delete_prefix("#{root}/") } if root
+      def check_rule(rule, query)
+        rule.check(query).reject { |d| ignored?(d, query) }
+      rescue StandardError => e
+        PgCanary.internal_error(e)
+        []
       end
-    end
 
-    # The application frame that triggered the query.
-    def source_location
-      line = @backtrace_cleaner.clean(caller).first
-      line && line[/\A.+?:\d+/]
-    end
+      def ignored?(detection, query)
+        config = query.config
+        return true if config.ignore_table?(detection.table)
+
+        # Table-less detections (e.g. ORDER BY RANDOM() over a subquery) are
+        # dropped when every table in the query is ignored.
+        if detection.table.nil?
+          tables = query.tables
+          return tables.any? && tables.all? { |t| config.ignore_table?(t) }
+        end
+
+        false
+      end
+
+      def build_backtrace_cleaner(root)
+        ActiveSupport::BacktraceCleaner.new.tap do |cleaner|
+          cleaner.add_silencer { |line| line.include?("lib/pg_canary") }
+          cleaner.add_filter { |line| line.delete_prefix("#{root}/") } if root
+        end
+      end
+
+      # The application frame that triggered the query.
+      def source_location
+        line = @backtrace_cleaner.clean(caller).first
+        line && line[/\A.+?:\d+/]
+      end
   end
 end

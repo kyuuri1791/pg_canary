@@ -31,9 +31,9 @@ module PgCanary
 
       private
 
-      def joined?(scope)
-        scope.stmt.from_clause.any? { |item| unwrap_node(item).is_a?(PgQuery::JoinExpr) }
-      end
+        def joined?(scope)
+          scope.stmt.from_clause.any? { |item| unwrap_node(item).is_a?(PgQuery::JoinExpr) }
+        end
     end
   end
 end

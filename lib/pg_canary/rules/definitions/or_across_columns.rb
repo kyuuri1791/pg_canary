@@ -32,34 +32,34 @@ module PgCanary
 
       private
 
-      # Distinct (table, column) pairs among the OR branches' simple
-      # column-vs-constant predicates.
-      def predicate_columns(query, scope, bool_expr)
-        columns = bool_expr.args.filter_map do |arg|
-          expr = unwrap_node(arg)
-          next nil unless expr.is_a?(PgQuery::A_Expr)
-          next nil unless comparison_expr?(expr) || %i[AEXPR_IN AEXPR_LIKE AEXPR_ILIKE].include?(expr.kind)
+        # Distinct (table, column) pairs among the OR branches' simple
+        # column-vs-constant predicates.
+        def predicate_columns(query, scope, bool_expr)
+          columns = bool_expr.args.filter_map do |arg|
+            expr = unwrap_node(arg)
+            next nil unless expr.is_a?(PgQuery::A_Expr)
+            next nil unless comparison_expr?(expr) || %i[AEXPR_IN AEXPR_LIKE AEXPR_ILIKE].include?(expr.kind)
 
-          column_ref = strip_type_casts(expr.lexpr)
-          next nil unless column_ref.is_a?(PgQuery::ColumnRef)
+            column_ref = strip_type_casts(expr.lexpr)
+            next nil unless column_ref.is_a?(PgQuery::ColumnRef)
 
-          resolved = scope.resolve(column_ref)
-          resolved if resolved && applicable_table?(query, resolved.first)
+            resolved = scope.resolve(column_ref)
+            resolved if resolved && applicable_table?(query, resolved.first)
+          end
+          columns.uniq.sort
         end
-        columns.uniq.sort
-      end
 
-      def build(query, columns)
-        column_list = columns.map { |table, column| "#{table}.#{column}" }.join(", ")
-        detection(
-          query,
-          table: columns.first.first,
-          columns: columns.map(&:last),
-          message: "OR across different columns (#{column_list}) often prevents a single index scan.",
-          suggestion: "Ensure each column has its own index (PostgreSQL can then BitmapOr them), " \
-                      "or split the query into a UNION of two indexed queries."
-        )
-      end
+        def build(query, columns)
+          column_list = columns.map { |table, column| "#{table}.#{column}" }.join(", ")
+          detection(
+            query,
+            table: columns.first.first,
+            columns: columns.map(&:last),
+            message: "OR across different columns (#{column_list}) often prevents a single index scan.",
+            suggestion: "Ensure each column has its own index (PostgreSQL can then BitmapOr them), " \
+                        "or split the query into a UNION of two indexed queries."
+          )
+        end
     end
   end
 end

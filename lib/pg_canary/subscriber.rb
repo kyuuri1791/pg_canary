@@ -25,17 +25,17 @@ module PgCanary
 
       private
 
-      def analysis_target?(payload)
-        return false if payload[:cached]
-        return false if payload[:name] && IGNORED_NAMES.include?(payload[:name])
-        return false unless payload[:sql]&.match?(SELECT_PREFIX)
+        def analysis_target?(payload)
+          return false if payload[:cached]
+          return false if payload[:name] && IGNORED_NAMES.include?(payload[:name])
+          return false unless payload[:sql]&.match?(SELECT_PREFIX)
 
-        !!payload[:connection]&.adapter_name&.match?(/postg/i)
-      end
+          !!payload[:connection]&.adapter_name&.match?(/postg/i)
+        end
 
-      def detector
-        @detector ||= Detector.new(PgCanary.config)
-      end
+        def detector
+          @detector ||= Detector.new(PgCanary.config)
+        end
     end
   end
 end

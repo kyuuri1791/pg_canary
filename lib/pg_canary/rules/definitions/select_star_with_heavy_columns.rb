@@ -41,29 +41,29 @@ module PgCanary
 
       private
 
-      # Tables whose rows are fetched with a star target (t.* or bare *).
-      def star_tables(scope)
-        tables = []
-        scope.stmt.target_list.each do |target|
-          res_target = unwrap_node(target)
-          next unless res_target.is_a?(PgQuery::ResTarget)
+        # Tables whose rows are fetched with a star target (t.* or bare *).
+        def star_tables(scope)
+          tables = []
+          scope.stmt.target_list.each do |target|
+            res_target = unwrap_node(target)
+            next unless res_target.is_a?(PgQuery::ResTarget)
 
-          column_ref = unwrap_node(res_target.val)
-          next unless column_ref.is_a?(PgQuery::ColumnRef)
+            column_ref = unwrap_node(res_target.val)
+            next unless column_ref.is_a?(PgQuery::ColumnRef)
 
-          fields = column_ref.fields.map { |f| unwrap_node(f) }
-          next unless fields.last.is_a?(PgQuery::A_Star)
+            fields = column_ref.fields.map { |f| unwrap_node(f) }
+            next unless fields.last.is_a?(PgQuery::A_Star)
 
-          qualifier = fields[-2]
-          if qualifier.is_a?(PgQuery::String)
-            table = scope.aliases[qualifier.sval]
-            tables << table if table
-          else
-            tables.concat(scope.tables)
+            qualifier = fields[-2]
+            if qualifier.is_a?(PgQuery::String)
+              table = scope.aliases[qualifier.sval]
+              tables << table if table
+            else
+              tables.concat(scope.tables)
+            end
           end
+          tables.uniq
         end
-        tables.uniq
-      end
     end
   end
 end

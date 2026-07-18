@@ -57,24 +57,24 @@ module PgCanary
 
         private
 
-        def collect_aliases(from_clause)
-          from_clause.each { |node| collect_from_node(unwrap_node(node)) }
-        end
-
-        def collect_from_node(node)
-          case node
-          when PgQuery::RangeVar
-            name = node.alias&.aliasname
-            name = node.relname if name.nil? || name.empty?
-            @aliases[name] = node.relname
-          when PgQuery::JoinExpr
-            collect_from_node(unwrap_node(node.larg))
-            collect_from_node(unwrap_node(node.rarg))
-          when PgQuery::RangeSubselect
-            name = node.alias&.aliasname
-            @aliases[name] = nil if name && !name.empty?
+          def collect_aliases(from_clause)
+            from_clause.each { |node| collect_from_node(unwrap_node(node)) }
           end
-        end
+
+          def collect_from_node(node)
+            case node
+            when PgQuery::RangeVar
+              name = node.alias&.aliasname
+              name = node.relname if name.nil? || name.empty?
+              @aliases[name] = node.relname
+            when PgQuery::JoinExpr
+              collect_from_node(unwrap_node(node.larg))
+              collect_from_node(unwrap_node(node.rarg))
+            when PgQuery::RangeSubselect
+              name = node.alias&.aliasname
+              @aliases[name] = nil if name && !name.empty?
+            end
+          end
       end
 
       attr_reader :sql, :connection, :parse_result, :config

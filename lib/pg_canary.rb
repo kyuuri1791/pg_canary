@@ -35,24 +35,24 @@ module PgCanary
 
     private
 
-    def logger
-      config.logger || default_logger
-    end
-
-    def default_logger
-      @default_logger ||= begin
-        require "logger"
-        ::Logger.new($stderr)
+      def logger
+        config.logger || default_logger
       end
-    end
 
-    def warn_once(message)
-      @warned ||= {}
-      return if @warned[message]
+      def default_logger
+        @default_logger ||= begin
+          require "logger"
+          ::Logger.new($stderr)
+        end
+      end
 
-      @warned[message] = true
-      logger.warn(message)
-    end
+      def warn_once(message)
+        @warned ||= {}
+        return if @warned[message]
+
+        @warned[message] = true
+        logger.warn(message)
+      end
   end
 
   if defined?(Rails::Railtie)

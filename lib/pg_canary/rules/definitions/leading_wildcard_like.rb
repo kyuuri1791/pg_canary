@@ -29,49 +29,49 @@ module PgCanary
 
       private
 
-      def like_expr?(node)
-        node.is_a?(PgQuery::A_Expr) && LIKE_KINDS.include?(node.kind)
-      end
-
-      def inspect_expr(query, scope, expr)
-        column_ref = strip_type_casts(expr.lexpr)
-        return nil unless column_ref.is_a?(PgQuery::ColumnRef)
-
-        pattern = pattern_value(query, expr.rexpr)
-        return nil unless pattern&.start_with?("%", "_")
-
-        table, column = scope.resolve(column_ref)
-        return nil unless table && column
-        return nil unless applicable_table?(query, table)
-        return nil if trgm_index?(query, table, column)
-
-        operator = expr.kind == :AEXPR_ILIKE ? "ILIKE" : "LIKE"
-        detection(
-          query,
-          table: table,
-          columns: column,
-          message: "Leading-wildcard #{operator} (#{pattern.inspect}) on #{table}.#{column} cannot use " \
-                   "a btree index and will scan every row in production.",
-          suggestion: <<~SUGGESTION.chomp
-            Consider the pg_trgm extension with a GIN index:
-              CREATE EXTENSION IF NOT EXISTS pg_trgm;
-              CREATE INDEX index_#{table}_on_#{column}_trgm ON #{table} USING gin (#{column} gin_trgm_ops);
-          SUGGESTION
-        )
-      end
-
-      # Pattern string from a literal, a cast literal, or a bind parameter.
-      def pattern_value(query, rexpr)
-        node = strip_type_casts(rexpr)
-        case node
-        when PgQuery::A_Const
-          value = constant_value(node)
-          value.is_a?(String) ? value : nil
-        when PgQuery::ParamRef
-          value = query.bind_value(node.number)
-          value.is_a?(String) ? value : nil
+        def like_expr?(node)
+          node.is_a?(PgQuery::A_Expr) && LIKE_KINDS.include?(node.kind)
         end
-      end
+
+        def inspect_expr(query, scope, expr)
+          column_ref = strip_type_casts(expr.lexpr)
+          return nil unless column_ref.is_a?(PgQuery::ColumnRef)
+
+          pattern = pattern_value(query, expr.rexpr)
+          return nil unless pattern&.start_with?("%", "_")
+
+          table, column = scope.resolve(column_ref)
+          return nil unless table && column
+          return nil unless applicable_table?(query, table)
+          return nil if trgm_index?(query, table, column)
+
+          operator = expr.kind == :AEXPR_ILIKE ? "ILIKE" : "LIKE"
+          detection(
+            query,
+            table: table,
+            columns: column,
+            message: "Leading-wildcard #{operator} (#{pattern.inspect}) on #{table}.#{column} cannot use " \
+                     "a btree index and will scan every row in production.",
+            suggestion: <<~SUGGESTION.chomp
+              Consider the pg_trgm extension with a GIN index:
+                CREATE EXTENSION IF NOT EXISTS pg_trgm;
+                CREATE INDEX index_#{table}_on_#{column}_trgm ON #{table} USING gin (#{column} gin_trgm_ops);
+            SUGGESTION
+          )
+        end
+
+        # Pattern string from a literal, a cast literal, or a bind parameter.
+        def pattern_value(query, rexpr)
+          node = strip_type_casts(rexpr)
+          case node
+          when PgQuery::A_Const
+            value = constant_value(node)
+            value.is_a?(String) ? value : nil
+          when PgQuery::ParamRef
+            value = query.bind_value(node.number)
+            value.is_a?(String) ? value : nil
+          end
+        end
     end
   end
 end

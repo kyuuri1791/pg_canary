@@ -37,45 +37,45 @@ module PgCanary
 
       private
 
-      # Unique [table, column] pairs appearing in cross-table equality
-      # conditions (JOIN ... ON and comma joins connected in WHERE).
-      def join_columns(scope)
-        columns = []
-        scope.stmt.from_clause.each do |item|
-          collect_join_quals(unwrap_node(item)) do |quals|
-            columns.concat(equality_columns(scope, quals))
+        # Unique [table, column] pairs appearing in cross-table equality
+        # conditions (JOIN ... ON and comma joins connected in WHERE).
+        def join_columns(scope)
+          columns = []
+          scope.stmt.from_clause.each do |item|
+            collect_join_quals(unwrap_node(item)) do |quals|
+              columns.concat(equality_columns(scope, quals))
+            end
           end
+          columns.concat(equality_columns(scope, scope.where_clause)) if scope.where_clause
+          columns.uniq
         end
-        columns.concat(equality_columns(scope, scope.where_clause)) if scope.where_clause
-        columns.uniq
-      end
 
-      def collect_join_quals(node, &)
-        return unless node.is_a?(PgQuery::JoinExpr)
+        def collect_join_quals(node, &)
+          return unless node.is_a?(PgQuery::JoinExpr)
 
-        yield node.quals if node.quals
-        collect_join_quals(unwrap_node(node.larg), &)
-        collect_join_quals(unwrap_node(node.rarg), &)
-      end
-
-      def equality_columns(scope, clause)
-        columns = []
-        walk_within_scope(clause) do |node|
-          next unless node.is_a?(PgQuery::A_Expr) && node.kind == :AEXPR_OP && operator_name(node) == "="
-
-          left = unwrap_node(node.lexpr)
-          right = unwrap_node(node.rexpr)
-          next unless left.is_a?(PgQuery::ColumnRef) && right.is_a?(PgQuery::ColumnRef)
-
-          left_resolved = scope.resolve(left)
-          right_resolved = scope.resolve(right)
-          next unless left_resolved && right_resolved
-          next if left_resolved.first == right_resolved.first # same table: not a join condition
-
-          columns << left_resolved << right_resolved
+          yield node.quals if node.quals
+          collect_join_quals(unwrap_node(node.larg), &)
+          collect_join_quals(unwrap_node(node.rarg), &)
         end
-        columns
-      end
+
+        def equality_columns(scope, clause)
+          columns = []
+          walk_within_scope(clause) do |node|
+            next unless node.is_a?(PgQuery::A_Expr) && node.kind == :AEXPR_OP && operator_name(node) == "="
+
+            left = unwrap_node(node.lexpr)
+            right = unwrap_node(node.rexpr)
+            next unless left.is_a?(PgQuery::ColumnRef) && right.is_a?(PgQuery::ColumnRef)
+
+            left_resolved = scope.resolve(left)
+            right_resolved = scope.resolve(right)
+            next unless left_resolved && right_resolved
+            next if left_resolved.first == right_resolved.first # same table: not a join condition
+
+            columns << left_resolved << right_resolved
+          end
+          columns
+        end
     end
   end
 end

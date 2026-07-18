@@ -40,37 +40,37 @@ module PgCanary
 
       private
 
-      # [table, column] of the first outer-scope reference inside the
-      # subquery, or nil when the subquery is self-contained.
-      def correlated_reference(sublink, outer_scope)
-        subselect = unwrap_node(sublink.subselect)
-        return nil unless subselect.is_a?(PgQuery::SelectStmt)
+        # [table, column] of the first outer-scope reference inside the
+        # subquery, or nil when the subquery is self-contained.
+        def correlated_reference(sublink, outer_scope)
+          subselect = unwrap_node(sublink.subselect)
+          return nil unless subselect.is_a?(PgQuery::SelectStmt)
 
-        inner_names = inner_relation_names(subselect)
-        found = nil
-        walk_ast(subselect) do |node|
-          next unless found.nil? && node.is_a?(PgQuery::ColumnRef)
+          inner_names = inner_relation_names(subselect)
+          found = nil
+          walk_ast(subselect) do |node|
+            next unless found.nil? && node.is_a?(PgQuery::ColumnRef)
 
-          fields = column_ref_fields(node)
-          next unless fields && fields.length >= 2
-          next if inner_names.include?(fields[-2])
+            fields = column_ref_fields(node)
+            next unless fields && fields.length >= 2
+            next if inner_names.include?(fields[-2])
 
-          found = outer_scope.resolve(node)
+            found = outer_scope.resolve(node)
+          end
+          found
         end
-        found
-      end
 
-      # Every relation name/alias visible anywhere inside the subquery.
-      def inner_relation_names(subselect)
-        names = []
-        walk_ast(subselect) do |node|
-          next unless node.is_a?(PgQuery::RangeVar)
+        # Every relation name/alias visible anywhere inside the subquery.
+        def inner_relation_names(subselect)
+          names = []
+          walk_ast(subselect) do |node|
+            next unless node.is_a?(PgQuery::RangeVar)
 
-          names << node.relname
-          names << node.alias.aliasname if node.alias
+            names << node.relname
+            names << node.alias.aliasname if node.alias
+          end
+          names
         end
-        names
-      end
     end
   end
 end

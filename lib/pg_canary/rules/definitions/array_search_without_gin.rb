@@ -37,35 +37,35 @@ module PgCanary
 
       private
 
-      def inspect_sides(query, scope, sides, operator)
-        sides.each do |side|
-          column_ref = strip_type_casts(side)
-          next unless column_ref.is_a?(PgQuery::ColumnRef)
+        def inspect_sides(query, scope, sides, operator)
+          sides.each do |side|
+            column_ref = strip_type_casts(side)
+            next unless column_ref.is_a?(PgQuery::ColumnRef)
 
-          table, column = scope.resolve(column_ref)
-          next unless table && column
-          next unless applicable_table?(query, table)
-          next unless array_type?(query.column_type(table, column))
-          next if gin_index_on?(query, table, column)
+            table, column = scope.resolve(column_ref)
+            next unless table && column
+            next unless applicable_table?(query, table)
+            next unless array_type?(query.column_type(table, column))
+            next if gin_index_on?(query, table, column)
 
-          return detection(
-            query,
-            table: table,
-            columns: column,
-            message: "Array search (#{operator}) on #{table}.#{column} has no GIN index " \
-                     "and will scan every row in production.",
-            suggestion: <<~SUGGESTION.chomp
-              Consider a GIN index on the array column:
-                CREATE INDEX index_#{table}_on_#{column} ON #{table} USING gin (#{column});
-            SUGGESTION
-          )
+            return detection(
+              query,
+              table: table,
+              columns: column,
+              message: "Array search (#{operator}) on #{table}.#{column} has no GIN index " \
+                       "and will scan every row in production.",
+              suggestion: <<~SUGGESTION.chomp
+                Consider a GIN index on the array column:
+                  CREATE INDEX index_#{table}_on_#{column} ON #{table} USING gin (#{column});
+              SUGGESTION
+            )
+          end
+          nil
         end
-        nil
-      end
 
-      def array_type?(sql_type)
-        sql_type&.end_with?("[]")
-      end
+        def array_type?(sql_type)
+          sql_type&.end_with?("[]")
+        end
     end
   end
 end

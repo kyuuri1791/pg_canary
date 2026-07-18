@@ -40,20 +40,20 @@ module PgCanary
 
       private
 
-      def numeric_value(query, node)
-        node = strip_type_casts(node)
-        case node
-        when PgQuery::A_Const
-          value = constant_value(node)
-          value.is_a?(Numeric) ? value.to_i : nil
-        when PgQuery::ParamRef
-          begin
-            Integer(query.bind_value(node.number), exception: false)
-          rescue TypeError
-            nil
+        def numeric_value(query, node)
+          node = strip_type_casts(node)
+          case node
+          when PgQuery::A_Const
+            value = constant_value(node)
+            value.is_a?(Numeric) ? value.to_i : nil
+          when PgQuery::ParamRef
+            begin
+              Integer(query.bind_value(node.number), exception: false)
+            rescue TypeError
+              nil
+            end
           end
         end
-      end
     end
   end
 end

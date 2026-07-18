@@ -31,55 +31,55 @@ module PgCanary
 
       private
 
-      # The first ColumnRef inside the function call (arguments may nest,
-      # e.g. lower(trim(email))).
-      def first_column_ref(node)
-        found = nil
-        walk_within_scope(node) do |msg|
-          found ||= msg if msg.is_a?(PgQuery::ColumnRef)
+        # The first ColumnRef inside the function call (arguments may nest,
+        # e.g. lower(trim(email))).
+        def first_column_ref(node)
+          found = nil
+          walk_within_scope(node) do |msg|
+            found ||= msg if msg.is_a?(PgQuery::ColumnRef)
+          end
+          found
         end
-        found
-      end
 
-      def inspect_side(query, scope, side)
-        func = strip_type_casts(side)
-        return nil unless func.is_a?(PgQuery::FuncCall)
+        def inspect_side(query, scope, side)
+          func = strip_type_casts(side)
+          return nil unless func.is_a?(PgQuery::FuncCall)
 
-        column_ref = first_column_ref(func)
-        return nil unless column_ref
+          column_ref = first_column_ref(func)
+          return nil unless column_ref
 
-        table, column = scope.resolve(column_ref)
-        return nil unless table && column
-        return nil unless applicable_table?(query, table)
+          table, column = scope.resolve(column_ref)
+          return nil unless table && column
+          return nil unless applicable_table?(query, table)
 
-        func_name = function_name(func)
-        return nil if expression_index?(query, table, column, func_name)
+          func_name = function_name(func)
+          return nil if expression_index?(query, table, column, func_name)
 
-        detection(
-          query,
-          table: table,
-          columns: column,
-          message: "#{table}.#{column} is wrapped in #{func_name}() inside WHERE, " \
-                   "so a plain index on #{column} cannot be used.",
-          suggestion: <<~SUGGESTION.chomp
-            Consider adding an expression index:
-              CREATE INDEX index_#{table}_on_#{func_name}_#{column} ON #{table} ((#{func_name}(#{column})));
-          SUGGESTION
-        )
-      end
-
-      # Matches by (function name, column name) word match against the index
-      # expression SQL — a deliberate approximation that already avoids the
-      # common false positives.
-      def expression_index?(query, table, column, func_name)
-        query.indexes(table).any? do |index|
-          expressions = index.expressions
-          next false unless expressions
-
-          expressions.match?(/\b#{Regexp.escape(func_name)}\s*\(/i) &&
-            expressions.match?(/\b#{Regexp.escape(column)}\b/)
+          detection(
+            query,
+            table: table,
+            columns: column,
+            message: "#{table}.#{column} is wrapped in #{func_name}() inside WHERE, " \
+                     "so a plain index on #{column} cannot be used.",
+            suggestion: <<~SUGGESTION.chomp
+              Consider adding an expression index:
+                CREATE INDEX index_#{table}_on_#{func_name}_#{column} ON #{table} ((#{func_name}(#{column})));
+            SUGGESTION
+          )
         end
-      end
+
+        # Matches by (function name, column name) word match against the index
+        # expression SQL — a deliberate approximation that already avoids the
+        # common false positives.
+        def expression_index?(query, table, column, func_name)
+          query.indexes(table).any? do |index|
+            expressions = index.expressions
+            next false unless expressions
+
+            expressions.match?(/\b#{Regexp.escape(func_name)}\s*\(/i) &&
+              expressions.match?(/\b#{Regexp.escape(column)}\b/)
+          end
+        end
     end
   end
 end

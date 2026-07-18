@@ -45,26 +45,26 @@ module PgCanary
 
       private
 
-      def value_count(query, a_expr)
-        case a_expr.kind
-        when :AEXPR_IN
-          list = unwrap_node(a_expr.rexpr)
-          list.is_a?(PgQuery::List) ? list.items.length : nil
-        when :AEXPR_OP_ANY
-          param = strip_type_casts(a_expr.rexpr)
-          return nil unless param.is_a?(PgQuery::ParamRef)
+        def value_count(query, a_expr)
+          case a_expr.kind
+          when :AEXPR_IN
+            list = unwrap_node(a_expr.rexpr)
+            list.is_a?(PgQuery::List) ? list.items.length : nil
+          when :AEXPR_OP_ANY
+            param = strip_type_casts(a_expr.rexpr)
+            return nil unless param.is_a?(PgQuery::ParamRef)
 
-          value = query.bind_value(param.number)
-          value.is_a?(Array) ? value.length : nil
+            value = query.bind_value(param.number)
+            value.is_a?(Array) ? value.length : nil
+          end
         end
-      end
 
-      def resolve_lexpr(scope, a_expr)
-        column_ref = strip_type_casts(a_expr.lexpr)
-        return nil unless column_ref.is_a?(PgQuery::ColumnRef)
+        def resolve_lexpr(scope, a_expr)
+          column_ref = strip_type_casts(a_expr.lexpr)
+          return nil unless column_ref.is_a?(PgQuery::ColumnRef)
 
-        scope.resolve(column_ref)
-      end
+          scope.resolve(column_ref)
+        end
     end
   end
 end

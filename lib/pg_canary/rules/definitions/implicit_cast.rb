@@ -29,47 +29,47 @@ module PgCanary
 
       private
 
-      def inspect_comparison(query, scope, expr)
-        left = unwrap_node(expr.lexpr)
-        right = unwrap_node(expr.rexpr)
+        def inspect_comparison(query, scope, expr)
+          left = unwrap_node(expr.lexpr)
+          right = unwrap_node(expr.rexpr)
 
-        column_ref, value = if left.is_a?(PgQuery::ColumnRef)
-                              [left, right]
-                            elsif right.is_a?(PgQuery::ColumnRef)
-                              [right, left]
-                            end
-        return nil unless column_ref
-        return nil unless numeric_literal?(value)
+          column_ref, value = if left.is_a?(PgQuery::ColumnRef)
+                                [left, right]
+                              elsif right.is_a?(PgQuery::ColumnRef)
+                                [right, left]
+                              end
+          return nil unless column_ref
+          return nil unless numeric_literal?(value)
 
-        table, column = scope.resolve(column_ref)
-        return nil unless table && column
-        return nil unless applicable_table?(query, table)
+          table, column = scope.resolve(column_ref)
+          return nil unless table && column
+          return nil unless applicable_table?(query, table)
 
-        column_type = query.column_type(table, column)
-        return nil unless INTEGER_TYPES.include?(column_type)
+          column_type = query.column_type(table, column)
+          return nil unless INTEGER_TYPES.include?(column_type)
 
-        detection(
-          query,
-          table: table,
-          columns: column,
-          message: "Comparing #{table}.#{column} (#{column_type}) with a numeric literal implicitly " \
-                   "casts the column to numeric, disabling any index on #{column}.",
-          suggestion: "Use a literal that matches the column type (integer)."
-        )
-      end
-
-      # A numeric/float literal, or an explicit cast to numeric of a literal.
-      def numeric_literal?(node)
-        case node
-        when PgQuery::A_Const
-          node.val == :fval
-        when PgQuery::TypeCast
-          type = string_values(node.type_name.names).last
-          NUMERIC_TYPE_NAMES.include?(type) && strip_type_casts(node).is_a?(PgQuery::A_Const)
-        else
-          false
+          detection(
+            query,
+            table: table,
+            columns: column,
+            message: "Comparing #{table}.#{column} (#{column_type}) with a numeric literal implicitly " \
+                     "casts the column to numeric, disabling any index on #{column}.",
+            suggestion: "Use a literal that matches the column type (integer)."
+          )
         end
-      end
+
+        # A numeric/float literal, or an explicit cast to numeric of a literal.
+        def numeric_literal?(node)
+          case node
+          when PgQuery::A_Const
+            node.val == :fval
+          when PgQuery::TypeCast
+            type = string_values(node.type_name.names).last
+            NUMERIC_TYPE_NAMES.include?(type) && strip_type_casts(node).is_a?(PgQuery::A_Const)
+          else
+            false
+          end
+        end
     end
   end
 end

@@ -52,15 +52,15 @@ module PgCanary
 
       private
 
-      def display_operator(a_expr)
-        case a_expr.kind
-        when :AEXPR_OP
-          operator = operator_name(a_expr)
-          REGEX_OPS.include?(operator) ? operator : nil
-        when :AEXPR_SIMILAR
-          "SIMILAR TO"
+        def display_operator(a_expr)
+          case a_expr.kind
+          when :AEXPR_OP
+            operator = operator_name(a_expr)
+            REGEX_OPS.include?(operator) ? operator : nil
+          when :AEXPR_SIMILAR
+            "SIMILAR TO"
+          end
         end
-      end
     end
   end
 end

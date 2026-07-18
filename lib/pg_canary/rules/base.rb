@@ -44,24 +44,24 @@ module PgCanary
 
       private
 
-      def rule_config(query)
-        query.config.rules[self.class.rule_name]
-      end
+        def rule_config(query)
+          query.config.rules[self.class.rule_name]
+        end
 
-      def applicable_table?(query, table)
-        !query.config.ignore_table?(table)
-      end
+        def applicable_table?(query, table)
+          !query.config.ignore_table?(table)
+        end
 
-      def detection(query, message:, suggestion: nil, table: nil, columns: nil)
-        Detection.new(
-          rule_name: self.class.rule_name,
-          sql: query.sql,
-          table: table,
-          columns: Array(columns),
-          message: message,
-          suggestion: suggestion
-        )
-      end
+        def detection(query, message:, suggestion: nil, table: nil, columns: nil)
+          Detection.new(
+            rule_name: self.class.rule_name,
+            sql: query.sql,
+            table: table,
+            columns: Array(columns),
+            message: message,
+            suggestion: suggestion
+          )
+        end
     end
   end
 end

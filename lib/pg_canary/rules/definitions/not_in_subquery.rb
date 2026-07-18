@@ -31,35 +31,35 @@ module PgCanary
 
       private
 
-      def not_expr?(node)
-        node.is_a?(PgQuery::BoolExpr) && node.boolop == :NOT_EXPR
-      end
+        def not_expr?(node)
+          node.is_a?(PgQuery::BoolExpr) && node.boolop == :NOT_EXPR
+        end
 
-      # x NOT IN (SELECT ...) parses as NOT(SubLink ANY, "=" test).
-      def any_sublink?(node)
-        return false unless node.is_a?(PgQuery::SubLink)
-        return false unless node.sub_link_type == :ANY_SUBLINK
+        # x NOT IN (SELECT ...) parses as NOT(SubLink ANY, "=" test).
+        def any_sublink?(node)
+          return false unless node.is_a?(PgQuery::SubLink)
+          return false unless node.sub_link_type == :ANY_SUBLINK
 
-        operator = string_values(node.oper_name).last
-        operator.nil? || operator == "="
-      end
+          operator = string_values(node.oper_name).last
+          operator.nil? || operator == "="
+        end
 
-      def build(query, scope, sublink)
-        test = strip_type_casts(sublink.testexpr)
-        table, column = test.is_a?(PgQuery::ColumnRef) ? scope.resolve(test) : nil
+        def build(query, scope, sublink)
+          test = strip_type_casts(sublink.testexpr)
+          table, column = test.is_a?(PgQuery::ColumnRef) ? scope.resolve(test) : nil
 
-        detection(
-          query,
-          table: table,
-          columns: column,
-          message: "NOT IN (SELECT ...) returns zero rows if the subquery yields even one NULL, " \
-                   "and the planner optimizes it poorly compared to an anti-join — a classic slow query.",
-          suggestion: <<~SUGGESTION.chomp
-            Consider rewriting to NOT EXISTS:
-              SELECT ... FROM t WHERE NOT EXISTS (SELECT 1 FROM sub WHERE sub.ref_id = t.id)
-          SUGGESTION
-        )
-      end
+          detection(
+            query,
+            table: table,
+            columns: column,
+            message: "NOT IN (SELECT ...) returns zero rows if the subquery yields even one NULL, " \
+                     "and the planner optimizes it poorly compared to an anti-join — a classic slow query.",
+            suggestion: <<~SUGGESTION.chomp
+              Consider rewriting to NOT EXISTS:
+                SELECT ... FROM t WHERE NOT EXISTS (SELECT 1 FROM sub WHERE sub.ref_id = t.id)
+            SUGGESTION
+          )
+        end
     end
   end
 end

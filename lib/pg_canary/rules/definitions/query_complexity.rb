@@ -38,24 +38,24 @@ module PgCanary
 
       private
 
-      def count_joins(stmt)
-        joins = 0
-        walk_ast(stmt) { |node| joins += 1 if node.is_a?(PgQuery::JoinExpr) }
-        joins
-      end
-
-      # Maximum nesting depth of SELECT statements (a flat query is 1).
-      def max_select_depth(node)
-        node = unwrap_node(node)
-        return 0 unless node.is_a?(Google::Protobuf::MessageExts)
-
-        deepest_child = 0
-        each_ast_child(node) do |child|
-          depth = max_select_depth(child)
-          deepest_child = depth if depth > deepest_child
+        def count_joins(stmt)
+          joins = 0
+          walk_ast(stmt) { |node| joins += 1 if node.is_a?(PgQuery::JoinExpr) }
+          joins
         end
-        (node.is_a?(PgQuery::SelectStmt) ? 1 : 0) + deepest_child
-      end
+
+        # Maximum nesting depth of SELECT statements (a flat query is 1).
+        def max_select_depth(node)
+          node = unwrap_node(node)
+          return 0 unless node.is_a?(Google::Protobuf::MessageExts)
+
+          deepest_child = 0
+          each_ast_child(node) do |child|
+            depth = max_select_depth(child)
+            deepest_child = depth if depth > deepest_child
+          end
+          (node.is_a?(PgQuery::SelectStmt) ? 1 : 0) + deepest_child
+        end
     end
   end
 end

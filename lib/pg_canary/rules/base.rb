@@ -55,7 +55,6 @@ module PgCanary
       def detection(query, message:, suggestion: nil, table: nil, columns: nil)
         Detection.new(
           rule_name: self.class.rule_name,
-          severity: rule_config(query).severity || :warning,
           sql: query.sql,
           table: table,
           columns: Array(columns),

@@ -48,13 +48,6 @@ RSpec.describe PgCanary::Rules::LeadingWildcardLike do
     expect(detections).to be_empty
   end
 
-  it "honours a severity override" do
-    PgCanary.config.rules.leading_wildcard_like.severity = :error
-    detections = detections_for { User.where("name LIKE ?", "%taro%").to_a }
-
-    expect(detections.first.severity).to eq(:error)
-  end
-
   it "can be disabled" do
     PgCanary.config.rules.leading_wildcard_like.enabled = false
     detections = detections_for { User.where("name LIKE ?", "%taro%").to_a }

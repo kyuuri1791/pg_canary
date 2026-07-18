@@ -28,7 +28,7 @@ module PgCanary
   # Exposes one RuleConfig per built-in rule, both as methods and via [].
   #
   #   config.rules.unindexed_where.enabled = true
-  #   config.rules[:leading_wildcard_like].severity = :error
+  #   config.rules[:deep_offset].threshold = 2000
   class RulesConfig
     def initialize
       @configs = {}
@@ -44,13 +44,13 @@ module PgCanary
     end
   end
 
-  # Per-rule settings. `enabled` / `severity` default to nil, meaning
-  # "use the rule class's default". Accessors for rule-specific options
+  # Per-rule settings. `enabled` defaults to nil, meaning "use the rule
+  # class's default". Accessors for rule-specific options
   # (e.g. config.rules.deep_offset.threshold = 2000) are generated from the
   # rule class's declared options, so a typo raises NoMethodError instead of
   # silently creating a setting nobody reads.
   class RuleConfig
-    attr_accessor :enabled, :severity
+    attr_accessor :enabled
 
     def initialize(option_defaults = {})
       @options = option_defaults.dup

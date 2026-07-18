@@ -77,8 +77,7 @@ module PgCanary
         <<~HTML
           <div style="padding:8px 12px;border-top:1px solid #444;">
             <div>
-              <strong style="color:#{d.severity == :error ? "#ff6b6b" : "#ffd93d"};">#{h(d.rule_name)}</strong>
-              <span style="opacity:.7;">(#{h(d.severity)})</span>
+              <strong style="color:#ffd93d;">#{h(d.rule_name)}</strong>
               #{subject_span(d)}
             </div>
             <pre style="margin:4px 0;white-space:pre-wrap;color:#9ecbff;">#{h(d.truncated_sql)}</pre>

@@ -8,7 +8,7 @@ module PgCanary
     # fired, on which query, which table/columns are involved, why it is a
     # problem, and how to fix it.
     Detection = Struct.new(
-      :rule_name, :severity, :sql, :table, :columns,
+      :rule_name, :sql, :table, :columns,
       :message, :suggestion, :location, :fingerprint,
       keyword_init: true
     ) do

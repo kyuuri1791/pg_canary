@@ -56,7 +56,6 @@ module PgCanary
   end
 
   if defined?(Rails::Railtie)
-    # Middleware insertion and automatic enabling in development/test.
     class Railtie < Rails::Railtie
       initializer "pg_canary.app_root", before: :load_config_initializers do
         PgCanary.config.app_root ||= Rails.root.to_s

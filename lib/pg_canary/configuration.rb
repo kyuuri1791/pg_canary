@@ -1,7 +1,6 @@
 # frozen_string_literal: true
 
 module PgCanary
-  # Global settings, exposed through PgCanary.configure.
   class Configuration
     # nil means "not explicitly configured" — the Railtie then enables
     # pg_canary in development/test only.

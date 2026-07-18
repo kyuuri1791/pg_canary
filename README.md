@@ -62,10 +62,7 @@ config.rules.query_complexity.max_joins = 12
 config.rules.select_star_with_heavy_columns.heavy_types = %w[bytea jsonb]
 ```
 
-Once opted in, you can keep false positives down two ways:
-
-1. List small tables in `config.ignore_tables`
-2. Provide approximate production row counts in `config.table_size_hints` — when hints are present, Tier 2 rules apply **only** to tables hinted at `size_rule_threshold` (default 10,000) or above. When hints are empty, Tier 2 rules apply to every table — which is precisely why they are off by default.
+Once opted in, keep false positives down by listing small tables in `config.ignore_tables`.
 
 ## Configuration
 
@@ -82,10 +79,6 @@ PgCanary.configure do |config|
 
   # Excluding tables
   config.ignore_tables = %w[prefectures plans schema_migrations ar_internal_metadata]
-
-  # For size-dependent (Tier 2) rules: approximate production row counts
-  config.table_size_hints = { "users" => 1_000_000, "orders" => 10_000_000 }
-  config.size_rule_threshold = 10_000  # apply Tier 2 rules only to tables hinted at or above this
 end
 ```
 

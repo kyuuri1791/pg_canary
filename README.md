@@ -77,10 +77,6 @@ PgCanary.configure do |config|
 end
 ```
 
-## Notifications
-
-Detections show up in a panel at the bottom of the page, each with: the rule name, the SQL, the table/columns involved, why it's a problem, the suggested fix, and the source location (file:line).
-
 ## How it works
 
 pg_canary subscribes to ActiveRecord's `sql.active_record` notifications and analyzes each executed SELECT. Detection is based on the query's AST — parsed with [`pg_query`](https://github.com/pganalyze/pg_query), a binding to PostgreSQL's own parser — combined with schema metadata (index definitions, opclasses, expression indexes, column types) read through ActiveRecord's schema cache. Because analysis happens at query execution time, runtime bind values are visible too — `OFFSET $1` with a bound value of 50000 is still caught, which linters that only see query text cannot do. Detections raised during a request are collected by a Rack middleware, which injects the panel into the HTML response.

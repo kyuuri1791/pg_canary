@@ -61,7 +61,7 @@ PgCanary.configure do |config|
   config.enabled = Rails.env.development? || Rails.env.test?
 
   # Excluding tables
-  config.ignore_tables = %w[prefectures plans schema_migrations ar_internal_metadata]
+  config.ignore_tables += %w[prefectures plans]
 
   # Per-rule settings
   config.rules.unindexed_where.enabled = true

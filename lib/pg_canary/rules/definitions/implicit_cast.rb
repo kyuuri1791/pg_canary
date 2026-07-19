@@ -1,7 +1,5 @@
 # frozen_string_literal: true
 
-using PgCanary::PgQueryRefinement
-
 module PgCanary
   module Rules
     # Comparing an integer-family column with a numeric/float literal
@@ -9,6 +7,8 @@ module PgCanary
     # disables its index. Restricted to cases provable from the AST alone.
     class ImplicitCast < Base
       default_enabled true
+
+      using PgCanary::PgQueryRefinement
 
       INTEGER_TYPES = %w[smallint integer bigint].freeze
       NUMERIC_TYPE_NAMES = %w[numeric decimal float4 float8].freeze

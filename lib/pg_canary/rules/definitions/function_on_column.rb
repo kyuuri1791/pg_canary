@@ -1,7 +1,5 @@
 # frozen_string_literal: true
 
-using PgCanary::PgQueryRefinement
-
 module PgCanary
   module Rules
     # A column wrapped in a function inside WHERE (lower(email) = ?,
@@ -10,6 +8,8 @@ module PgCanary
     # exists.
     class FunctionOnColumn < Base
       default_enabled true
+
+      using PgCanary::PgQueryRefinement
 
       CHECKED_KINDS = %i[AEXPR_OP AEXPR_LIKE AEXPR_ILIKE AEXPR_IN AEXPR_BETWEEN].freeze
 

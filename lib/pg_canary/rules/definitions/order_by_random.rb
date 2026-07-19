@@ -1,13 +1,13 @@
 # frozen_string_literal: true
 
-using PgCanary::PgQueryRefinement
-
 module PgCanary
   module Rules
     # ORDER BY RANDOM() sorts the entire result set just to pick rows —
     # always suspicious regardless of table size.
     class OrderByRandom < Base
       default_enabled true
+
+      using PgCanary::PgQueryRefinement
 
       def check
         detections = []

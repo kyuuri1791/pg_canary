@@ -1,7 +1,5 @@
 # frozen_string_literal: true
 
-using PgCanary::PgQueryRefinement
-
 module PgCanary
   module Rules
     # OR conditions spanning different columns. PostgreSQL
@@ -9,6 +7,8 @@ module PgCanary
     # warning-level hint rather than a certainty.
     class OrAcrossColumns < Base
       default_enabled false
+
+      using PgCanary::PgQueryRefinement
 
       def check
         detections = []

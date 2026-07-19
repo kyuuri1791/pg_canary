@@ -2,14 +2,14 @@
 
 require "active_support/backtrace_cleaner"
 
-using PgCanary::PgQueryRefinement
-
 module PgCanary
   # Parses an event's SQL, runs every enabled rule against it, and filters
   # ignored tables. Each returned Detection carries the query's fingerprint,
   # so a consumer that sees the same query and rule repeatedly (e.g. an N+1
   # loop within one request) can collapse them — see Middleware.
   class Detector
+    using PgCanary::PgQueryRefinement
+
     # Swallows the configuration whole at construction: pg_canary treats it
     # as fixed after boot (set in an initializer).
     def initialize(config)

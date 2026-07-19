@@ -1,7 +1,5 @@
 # frozen_string_literal: true
 
-using PgCanary::PgQueryRefinement
-
 module PgCanary
   module Rules
     # Searching a jsonb column in WHERE:
@@ -13,6 +11,8 @@ module PgCanary
       default_enabled true
 
       include IndexPredicates
+
+      using PgCanary::PgQueryRefinement
 
       CONTAINMENT_OPS = %w[@> <@ ? ?| ?&].freeze
       EXTRACTION_OPS = %w[-> ->> #> #>>].freeze

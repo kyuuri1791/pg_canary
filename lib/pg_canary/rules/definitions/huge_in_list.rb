@@ -1,7 +1,5 @@
 # frozen_string_literal: true
 
-using PgCanary::PgQueryRefinement
-
 module PgCanary
   module Rules
     # IN (...) / = ANY(...) with a huge number of values: the statement
@@ -12,6 +10,8 @@ module PgCanary
     class HugeInList < Base
       default_enabled true
       option :threshold, default: 500
+
+      using PgCanary::PgQueryRefinement
 
       def check
         threshold = rule_config.threshold

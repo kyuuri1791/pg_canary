@@ -2,8 +2,6 @@
 
 require "active_support/core_ext/string/inflections"
 
-using PgCanary::PgQueryRefinement
-
 module PgCanary
   module Rules
     # Base class for detection rules.

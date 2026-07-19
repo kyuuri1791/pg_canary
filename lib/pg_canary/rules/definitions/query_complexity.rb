@@ -1,7 +1,5 @@
 # frozen_string_literal: true
 
-using PgCanary::PgQueryRefinement
-
 module PgCanary
   module Rules
     # "spaghetti query" guard — too many joins or too much
@@ -12,6 +10,8 @@ module PgCanary
       default_enabled false
       option :max_joins, default: 8
       option :max_depth, default: 4
+
+      using PgCanary::PgQueryRefinement
 
       def check
         max_joins = rule_config.max_joins

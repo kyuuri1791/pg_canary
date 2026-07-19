@@ -1,7 +1,5 @@
 # frozen_string_literal: true
 
-using PgCanary::PgQueryRefinement
-
 module PgCanary
   module Rules
     # join-condition columns with no index leading with
@@ -11,6 +9,8 @@ module PgCanary
       default_enabled false
 
       include IndexPredicates
+
+      using PgCanary::PgQueryRefinement
 
       def check
         detections = []

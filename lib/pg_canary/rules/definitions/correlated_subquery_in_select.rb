@@ -1,13 +1,13 @@
 # frozen_string_literal: true
 
-using PgCanary::PgQueryRefinement
-
 module PgCanary
   module Rules
     # A scalar subquery in the SELECT list that references the outer table
     # runs once per result row (N+1 inside a single query).
     class CorrelatedSubqueryInSelect < Base
       default_enabled true
+
+      using PgCanary::PgQueryRefinement
 
       def check
         detections = []

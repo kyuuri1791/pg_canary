@@ -1,7 +1,5 @@
 # frozen_string_literal: true
 
-using PgCanary::PgQueryRefinement
-
 module PgCanary
   module Rules
     # equality/range predicates on columns with no index
@@ -10,6 +8,8 @@ module PgCanary
     # by default.
     class UnindexedWhere < Base
       default_enabled false
+
+      using PgCanary::PgQueryRefinement
 
       def check
         each_scope.with_object([]) do |scope, detections|

@@ -1,7 +1,5 @@
 # frozen_string_literal: true
 
-using PgCanary::PgQueryRefinement
-
 module PgCanary
   module Rules
     # A JOIN with no join condition — an explicit CROSS JOIN between real
@@ -9,6 +7,8 @@ module PgCanary
     # produces a cross product whose row count is the product of both sides.
     class CartesianJoin < Base
       default_enabled true
+
+      using PgCanary::PgQueryRefinement
 
       def check
         detections = []

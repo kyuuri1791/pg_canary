@@ -1,13 +1,13 @@
 # frozen_string_literal: true
 
-using PgCanary::PgQueryRefinement
-
 module PgCanary
   module Rules
     # SELECT COUNT(*) without WHERE. Because of MVCC,
     # PostgreSQL has no O(1) row count — this scans the whole table.
     class CountStarWithoutWhere < Base
       default_enabled false
+
+      using PgCanary::PgQueryRefinement
 
       def check
         detections = []

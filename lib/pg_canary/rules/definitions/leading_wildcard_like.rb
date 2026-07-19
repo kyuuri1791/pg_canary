@@ -1,7 +1,5 @@
 # frozen_string_literal: true
 
-using PgCanary::PgQueryRefinement
-
 module PgCanary
   module Rules
     # LIKE / ILIKE with a leading wildcard ('%foo', '%foo%') cannot use a
@@ -12,6 +10,8 @@ module PgCanary
       default_enabled true
 
       include IndexPredicates
+
+      using PgCanary::PgQueryRefinement
 
       LIKE_KINDS = %i[AEXPR_LIKE AEXPR_ILIKE].freeze
 

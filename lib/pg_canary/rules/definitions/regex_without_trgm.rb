@@ -1,7 +1,5 @@
 # frozen_string_literal: true
 
-using PgCanary::PgQueryRefinement
-
 module PgCanary
   module Rules
     # Regular-expression search (~, ~*, SIMILAR TO) cannot use a plain btree
@@ -11,6 +9,8 @@ module PgCanary
       default_enabled true
 
       include IndexPredicates
+
+      using PgCanary::PgQueryRefinement
 
       REGEX_OPS = %w[~ ~* !~ !~*].freeze
 

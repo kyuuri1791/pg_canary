@@ -1,7 +1,5 @@
 # frozen_string_literal: true
 
-using PgCanary::PgQueryRefinement
-
 module PgCanary
   module Rules
     # DISTINCT combined with JOIN. Frequently the DISTINCT
@@ -10,6 +8,8 @@ module PgCanary
     # uses exist, hence opt-in.
     class DistinctWithJoin < Base
       default_enabled false
+
+      using PgCanary::PgQueryRefinement
 
       def check
         detections = []

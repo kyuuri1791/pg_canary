@@ -1,7 +1,5 @@
 # frozen_string_literal: true
 
-using PgCanary::PgQueryRefinement
-
 module PgCanary
   module Rules
     # OFFSET-based pagination reads and throws away every skipped row, so
@@ -11,6 +9,8 @@ module PgCanary
     class DeepOffset < Base
       default_enabled true
       option :threshold, default: 1000
+
+      using PgCanary::PgQueryRefinement
 
       def check
         threshold = rule_config.threshold

@@ -1,7 +1,5 @@
 # frozen_string_literal: true
 
-using PgCanary::PgQueryRefinement
-
 module PgCanary
   module Rules
     # SELECT * (ActiveRecord's default) on a table that has
@@ -11,6 +9,8 @@ module PgCanary
     class SelectStarWithHeavyColumns < Base
       default_enabled false
       option :heavy_types, default: %w[bytea jsonb text].freeze
+
+      using PgCanary::PgQueryRefinement
 
       def check
         heavy_types = rule_config.heavy_types

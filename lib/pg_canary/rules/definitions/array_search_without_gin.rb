@@ -1,7 +1,5 @@
 # frozen_string_literal: true
 
-using PgCanary::PgQueryRefinement
-
 module PgCanary
   module Rules
     # Searching an array column (@>, <@, &&, or value = ANY(column)) without
@@ -10,6 +8,8 @@ module PgCanary
       default_enabled true
 
       include IndexPredicates
+
+      using PgCanary::PgQueryRefinement
 
       ARRAY_OPS = %w[@> <@ &&].freeze
 

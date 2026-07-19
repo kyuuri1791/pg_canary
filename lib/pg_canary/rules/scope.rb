@@ -1,12 +1,12 @@
 # frozen_string_literal: true
 
-using PgCanary::PgQueryRefinement
-
 module PgCanary
   module Rules
     # One SELECT scope (top-level statement, CTE, subquery, ...) with its
     # own FROM-clause alias resolution.
     class Scope
+      using PgCanary::PgQueryRefinement
+
       attr_reader :stmt, :aliases
 
       def initialize(stmt)

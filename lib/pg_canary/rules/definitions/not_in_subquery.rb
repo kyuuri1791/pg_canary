@@ -1,7 +1,5 @@
 # frozen_string_literal: true
 
-using PgCanary::PgQueryRefinement
-
 module PgCanary
   module Rules
     # NOT IN (SELECT ...) is a double trap: if the subquery ever returns a
@@ -9,6 +7,8 @@ module PgCanary
     # anti-join as effectively as with NOT EXISTS.
     class NotInSubquery < Base
       default_enabled true
+
+      using PgCanary::PgQueryRefinement
 
       def check
         detections = []

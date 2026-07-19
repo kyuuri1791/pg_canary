@@ -9,9 +9,7 @@ module PgCanary
     # Silent when a matching expression index (same function, same column)
     # exists.
     class FunctionOnColumn < Base
-      def default_enabled
-        true
-      end
+      default_enabled true
 
       CHECKED_KINDS = %i[AEXPR_OP AEXPR_LIKE AEXPR_ILIKE AEXPR_IN AEXPR_BETWEEN].freeze
 

@@ -29,19 +29,25 @@ module PgCanary
         def options
           @options ||= {}
         end
+
+        def default_enabled(value = nil)
+          if value.nil?
+            raise NotImplementedError, "#{self} must declare default_enabled" if @default_enabled.nil?
+
+            @default_enabled
+          else
+            @default_enabled = value
+          end
+        end
+
+        def enabled?(config)
+          setting = config.rules[rule_name].enabled
+          setting.nil? ? default_enabled : setting
+        end
       end
 
       def check(_query)
         raise NotImplementedError, "#{self.class} must implement #check"
-      end
-
-      def enabled?(config)
-        setting = config.rules[self.class.rule_name].enabled
-        setting.nil? ? default_enabled : setting
-      end
-
-      def default_enabled
-        raise NotImplementedError, "#{self.class} must declare #default_enabled (true for Tier 1, false for Tier 2)"
       end
 
       private

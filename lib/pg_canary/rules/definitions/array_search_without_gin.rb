@@ -7,11 +7,9 @@ module PgCanary
     # Searching an array column (@>, <@, &&, or value = ANY(column)) without
     # a GIN index scans every row.
     class ArraySearchWithoutGin < Base
-      include IndexPredicates
+      default_enabled true
 
-      def default_enabled
-        true
-      end
+      include IndexPredicates
 
       ARRAY_OPS = %w[@> <@ &&].freeze
 

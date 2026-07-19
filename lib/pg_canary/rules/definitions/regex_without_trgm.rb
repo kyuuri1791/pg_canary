@@ -8,11 +8,9 @@ module PgCanary
     # index; only a pg_trgm GIN/GiST index can serve it. The regex variant of
     # leading_wildcard_like.
     class RegexWithoutTrgm < Base
-      include IndexPredicates
+      default_enabled true
 
-      def default_enabled
-        true
-      end
+      include IndexPredicates
 
       REGEX_OPS = %w[~ ~* !~ !~*].freeze
 

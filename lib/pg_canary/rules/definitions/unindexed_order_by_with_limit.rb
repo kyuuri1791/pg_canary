@@ -4,15 +4,13 @@ using PgCanary::PgQueryRefinement
 
 module PgCanary
   module Rules
-    # Tier 2 (opt-in): ORDER BY x LIMIT n without an index led by x forces a
+    # ORDER BY x LIMIT n without an index led by x forces a
     # full sort before the limit can apply. Size-dependent, so disabled by
     # default.
     class UnindexedOrderByWithLimit < Base
-      include IndexPredicates
+      default_enabled false
 
-      def default_enabled
-        false
-      end
+      include IndexPredicates
 
       def check(query)
         detections = []

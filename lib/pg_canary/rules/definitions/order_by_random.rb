@@ -7,9 +7,7 @@ module PgCanary
     # ORDER BY RANDOM() sorts the entire result set just to pick rows —
     # always suspicious regardless of table size.
     class OrderByRandom < Base
-      def default_enabled
-        true
-      end
+      default_enabled true
 
       def check(query)
         detections = []

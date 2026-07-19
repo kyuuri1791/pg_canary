@@ -7,9 +7,7 @@ module PgCanary
     # A scalar subquery in the SELECT list that references the outer table
     # runs once per result row (N+1 inside a single query).
     class CorrelatedSubqueryInSelect < Base
-      def default_enabled
-        true
-      end
+      default_enabled true
 
       def check(query)
         detections = []

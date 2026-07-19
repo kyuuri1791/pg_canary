@@ -4,17 +4,14 @@ using PgCanary::PgQueryRefinement
 
 module PgCanary
   module Rules
-    # Tier 2 (opt-in): "spaghetti query" guard — too many joins or too much
+    # "spaghetti query" guard — too many joins or too much
     # subquery nesting. Thresholds:
     #   config.rules.query_complexity.max_joins (default 8)
     #   config.rules.query_complexity.max_depth (default 4)
     class QueryComplexity < Base
+      default_enabled false
       option :max_joins, default: 8
       option :max_depth, default: 4
-
-      def default_enabled
-        false
-      end
 
       def check(query)
         max_joins = rule_config(query).max_joins

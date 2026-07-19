@@ -8,9 +8,7 @@ module PgCanary
     # tables, or a comma join whose WHERE clause never connects the tables —
     # produces a cross product whose row count is the product of both sides.
     class CartesianJoin < Base
-      def default_enabled
-        true
-      end
+      default_enabled true
 
       def check(query)
         detections = []

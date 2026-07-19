@@ -4,14 +4,12 @@ using PgCanary::PgQueryRefinement
 
 module PgCanary
   module Rules
-    # Tier 2 (opt-in): equality/range predicates on columns with no index
+    # equality/range predicates on columns with no index
     # whose leading column could serve them. Depends on production table
     # size — a 30-row lookup table is fine without indexes — hence disabled
     # by default.
     class UnindexedWhere < Base
-      def default_enabled
-        false
-      end
+      default_enabled false
 
       def check(query)
         query.each_scope.with_object([]) do |scope, detections|

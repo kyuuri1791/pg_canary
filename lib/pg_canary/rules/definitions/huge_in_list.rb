@@ -10,11 +10,8 @@ module PgCanary
     # SQL linters cannot see.
     # Threshold: config.rules.huge_in_list.threshold (default 500).
     class HugeInList < Base
+      default_enabled true
       option :threshold, default: 500
-
-      def default_enabled
-        true
-      end
 
       def check(query)
         threshold = rule_config(query).threshold

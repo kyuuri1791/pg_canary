@@ -4,13 +4,11 @@ using PgCanary::PgQueryRefinement
 
 module PgCanary
   module Rules
-    # Tier 2 (opt-in): OR conditions spanning different columns. PostgreSQL
+    # OR conditions spanning different columns. PostgreSQL
     # can sometimes combine per-column indexes with a BitmapOr, so this is a
     # warning-level hint rather than a certainty.
     class OrAcrossColumns < Base
-      def default_enabled
-        false
-      end
+      default_enabled false
 
       def check(query)
         detections = []

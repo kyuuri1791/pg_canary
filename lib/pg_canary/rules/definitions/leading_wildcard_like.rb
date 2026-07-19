@@ -9,11 +9,9 @@ module PgCanary
     # helps, so we stay silent when one exists on the column.
     # Bind parameters ($1) are resolved from the event's binds.
     class LeadingWildcardLike < Base
-      include IndexPredicates
+      default_enabled true
 
-      def default_enabled
-        true
-      end
+      include IndexPredicates
 
       LIKE_KINDS = %i[AEXPR_LIKE AEXPR_ILIKE].freeze
 

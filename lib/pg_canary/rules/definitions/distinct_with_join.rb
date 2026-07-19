@@ -4,14 +4,12 @@ using PgCanary::PgQueryRefinement
 
 module PgCanary
   module Rules
-    # Tier 2 (opt-in): DISTINCT combined with JOIN. Frequently the DISTINCT
+    # DISTINCT combined with JOIN. Frequently the DISTINCT
     # only exists to undo row fanout caused by the join — the work of
     # producing and then deduplicating the duplicates is wasted. Legitimate
     # uses exist, hence opt-in.
     class DistinctWithJoin < Base
-      def default_enabled
-        false
-      end
+      default_enabled false
 
       def check(query)
         detections = []

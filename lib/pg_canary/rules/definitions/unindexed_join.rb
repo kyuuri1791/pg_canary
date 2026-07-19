@@ -4,15 +4,13 @@ using PgCanary::PgQueryRefinement
 
 module PgCanary
   module Rules
-    # Tier 2 (opt-in): join-condition columns with no index leading with
+    # join-condition columns with no index leading with
     # them. Unlike active_record_doctor's static association check, this
     # looks at joins that actually ran, so raw-SQL joins are covered too.
     class UnindexedJoin < Base
-      include IndexPredicates
+      default_enabled false
 
-      def default_enabled
-        false
-      end
+      include IndexPredicates
 
       def check(query)
         detections = []

@@ -15,7 +15,7 @@ module PgCanary
     # as fixed after boot (set in an initializer).
     def initialize(config)
       @config = config
-      @rules = Rules::Base.all.map(&:new).select { |rule| rule.enabled?(config) }
+      @rules = Rules::Base.all.select { |klass| klass.enabled?(config) }.map(&:new)
       @backtrace_cleaner = build_backtrace_cleaner(config.app_root)
     end
 

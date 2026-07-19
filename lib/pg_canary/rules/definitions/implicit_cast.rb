@@ -8,9 +8,7 @@ module PgCanary
     # (age = 1.5) makes PostgreSQL cast the *column* to numeric, which
     # disables its index. Restricted to cases provable from the AST alone.
     class ImplicitCast < Base
-      def default_enabled
-        true
-      end
+      default_enabled true
 
       INTEGER_TYPES = %w[smallint integer bigint].freeze
       NUMERIC_TYPE_NAMES = %w[numeric decimal float4 float8].freeze

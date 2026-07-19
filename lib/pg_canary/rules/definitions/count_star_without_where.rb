@@ -4,12 +4,10 @@ using PgCanary::PgQueryRefinement
 
 module PgCanary
   module Rules
-    # Tier 2 (opt-in): SELECT COUNT(*) without WHERE. Because of MVCC,
+    # SELECT COUNT(*) without WHERE. Because of MVCC,
     # PostgreSQL has no O(1) row count — this scans the whole table.
     class CountStarWithoutWhere < Base
-      def default_enabled
-        false
-      end
+      default_enabled false
 
       def check(query)
         detections = []

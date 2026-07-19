@@ -4,14 +4,12 @@ using PgCanary::PgQueryRefinement
 
 module PgCanary
   module Rules
-    # Tier 2 (opt-in): UNION without ALL deduplicates the combined result by
+    # UNION without ALL deduplicates the combined result by
     # sorting/hashing all rows. When the branches cannot overlap (or
     # duplicates are acceptable), UNION ALL skips that work. Whether
     # deduplication is intended is the author's call, hence opt-in.
     class UnionInsteadOfUnionAll < Base
-      def default_enabled
-        false
-      end
+      default_enabled false
 
       def check(query)
         union = query.scopes.find { |scope| scope.stmt.op == :SETOP_UNION && !scope.stmt.all }

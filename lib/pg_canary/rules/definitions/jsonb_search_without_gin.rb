@@ -10,11 +10,9 @@ module PgCanary
     # - key extraction (->> etc.) compared against a value needs a matching
     #   expression index
     class JsonbSearchWithoutGin < Base
-      include IndexPredicates
+      default_enabled true
 
-      def default_enabled
-        true
-      end
+      include IndexPredicates
 
       CONTAINMENT_OPS = %w[@> <@ ? ?| ?&].freeze
       EXTRACTION_OPS = %w[-> ->> #> #>>].freeze

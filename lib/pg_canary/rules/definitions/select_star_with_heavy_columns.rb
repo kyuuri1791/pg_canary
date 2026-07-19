@@ -4,16 +4,13 @@ using PgCanary::PgQueryRefinement
 
 module PgCanary
   module Rules
-    # Tier 2 (opt-in): SELECT * (ActiveRecord's default) on a table that has
+    # SELECT * (ActiveRecord's default) on a table that has
     # heavy columns (bytea / text / jsonb) transfers those payloads on every
     # query. Whether that matters depends on the data, hence opt-in.
     # Heavy types: config.rules.select_star_with_heavy_columns.heavy_types.
     class SelectStarWithHeavyColumns < Base
+      default_enabled false
       option :heavy_types, default: %w[bytea jsonb text].freeze
-
-      def default_enabled
-        false
-      end
 
       def check(query)
         heavy_types = rule_config(query).heavy_types

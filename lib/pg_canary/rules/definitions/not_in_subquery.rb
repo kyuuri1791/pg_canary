@@ -8,9 +8,7 @@ module PgCanary
     # NULL the whole predicate yields no rows, and the planner cannot use an
     # anti-join as effectively as with NOT EXISTS.
     class NotInSubquery < Base
-      def default_enabled
-        true
-      end
+      default_enabled true
 
       def check(query)
         detections = []

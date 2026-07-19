@@ -67,7 +67,7 @@ module PgCanary
 
       config.after_initialize do
         config = PgCanary.config
-        config.enabled = Rails.env.development? || Rails.env.test? if config.enabled.nil?
+        config.enabled = Rails.env.development? if config.enabled.nil?
         config.logger ||= Rails.logger
         Subscriber.subscribe! if config.enabled
       end

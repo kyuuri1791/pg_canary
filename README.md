@@ -46,34 +46,29 @@ end
 | `select_star_with_heavy_columns` | `SELECT *` (ActiveRecord's default) on tables with heavy columns (bytea/text/jsonb, configurable) |
 | `query_complexity` | More than 8 joins or subquery nesting deeper than 4 (both configurable) — the "spaghetti query" guard |
 
-**Why disabled by default:** the first four depend on production table size — a missing index is not a problem in itself. Lookup tables like prefectures or plans hold a few dozen rows in production too, and a Seq Scan is the *correct* plan for them. The rest depend on the author's intent (deliberate DISTINCT, required deduplication, acceptable payloads). Nothing in the schema or the AST reveals either, so enabling these rules by default would drown you in false positives.
-
-Rule-specific thresholds are set through the same `config.rules` interface:
-
-```ruby
-config.rules.deep_offset.threshold = 2000
-config.rules.huge_in_list.threshold = 200
-config.rules.query_complexity.max_joins = 12
-config.rules.select_star_with_heavy_columns.heavy_types = %w[bytea jsonb]
-```
+**Why disabled by default:** the first four depend on production table size — a missing index is not a problem in itself. Lookup tables like prefectures or plans hold a few dozen rows in production too, and a Seq Scan is the right plan for them. The rest depend on the author's intent (deliberate DISTINCT, required deduplication, acceptable payloads). Nothing in the schema or the AST reveals either, so these rules would produce many false positives if enabled by default. Enable the ones that fit your app individually (see [Configuration](#configuration)).
 
 Once opted in, keep false positives down by listing small tables in `config.ignore_tables`.
 
 ## Configuration
 
-Everything works with the defaults; an initializer is only needed to change them — e.g. to enable opt-in rules:
+Everything works with the defaults. To change them, create an initializer:
 
 ```ruby
 # config/initializers/pg_canary.rb
 PgCanary.configure do |config|
-  config.enabled = Rails.env.development?
-
-  # Per-rule settings
-  config.rules.unindexed_where.enabled = true
-  config.rules.leading_wildcard_like.severity = :error  # :error / :warning
+  # Where to run (defaults to development)
+  config.enabled = Rails.env.development? || Rails.env.test?
 
   # Excluding tables
   config.ignore_tables = %w[prefectures plans schema_migrations ar_internal_metadata]
+
+  # Per-rule settings
+  config.rules.unindexed_where.enabled = true
+  config.rules.deep_offset.threshold = 2000
+  config.rules.huge_in_list.threshold = 200
+  config.rules.query_complexity.max_joins = 12
+  config.rules.select_star_with_heavy_columns.heavy_types = %w[bytea jsonb]
 end
 ```
 

@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+using PgCanary::PgQueryRefinement
+
 module PgCanary
   module Rules
     # A JOIN with no join condition — an explicit CROSS JOIN between real
@@ -14,7 +16,7 @@ module PgCanary
         detections = []
         query.each_scope do |scope|
           scope.stmt.from_clause.each do |item|
-            each_join(unwrap_node(item)) do |join|
+            each_join(item.unwrap) do |join|
               detections << join_detection(query, join) if unconditioned?(join)
             end
           end
@@ -29,8 +31,8 @@ module PgCanary
           return unless node.is_a?(PgQuery::JoinExpr)
 
           yield node
-          each_join(unwrap_node(node.larg), &)
-          each_join(unwrap_node(node.rarg), &)
+          each_join(node.larg&.unwrap, &)
+          each_join(node.rarg&.unwrap, &)
         end
 
         def unconditioned?(join)
@@ -45,17 +47,17 @@ module PgCanary
         # Restrict to joins between real tables so that deliberate cross joins
         # against functions (generate_series etc.) stay silent.
         def real_table?(node)
-          unwrap_node(node).is_a?(PgQuery::RangeVar)
+          node&.unwrap.is_a?(PgQuery::RangeVar)
         end
 
         def joinable_side?(node)
-          inner = unwrap_node(node)
+          inner = node&.unwrap
           inner.is_a?(PgQuery::RangeVar) || inner.is_a?(PgQuery::JoinExpr)
         end
 
         # FROM a, b (2+ plain tables) with no column-to-column equality in WHERE.
         def comma_cartesian?(scope)
-          plain_tables = scope.stmt.from_clause.map { |n| unwrap_node(n) }.grep(PgQuery::RangeVar)
+          plain_tables = scope.stmt.from_clause.map(&:unwrap).grep(PgQuery::RangeVar)
           return false if plain_tables.length < 2
 
           !cross_table_equality?(scope)
@@ -65,11 +67,11 @@ module PgCanary
           return false unless scope.where_clause
 
           found = false
-          walk_within_scope(scope.where_clause) do |node|
-            next unless node.is_a?(PgQuery::A_Expr) && comparison_expr?(node)
+          scope.where_clause.walk_scope do |node|
+            next unless node.is_a?(PgQuery::A_Expr) && node.comparison?
 
-            left = unwrap_node(node.lexpr)
-            right = unwrap_node(node.rexpr)
+            left = node.lexpr&.unwrap
+            right = node.rexpr&.unwrap
             next unless left.is_a?(PgQuery::ColumnRef) && right.is_a?(PgQuery::ColumnRef)
 
             left_table, = scope.resolve(left)
@@ -80,7 +82,7 @@ module PgCanary
         end
 
         def join_detection(query, join)
-          tables = [join.larg, join.rarg].map { |n| unwrap_node(n) }
+          tables = [join.larg, join.rarg].map(&:unwrap)
                                          .grep(PgQuery::RangeVar).map(&:relname)
           build(query, tables)
         end

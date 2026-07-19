@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+using PgCanary::PgQueryRefinement
+
 module PgCanary
   module Rules
     # Tier 2 (opt-in): "spaghetti query" guard — too many joins or too much
@@ -40,17 +42,17 @@ module PgCanary
 
         def count_joins(stmt)
           joins = 0
-          walk_ast(stmt) { |node| joins += 1 if node.is_a?(PgQuery::JoinExpr) }
+          stmt.walk { |node| joins += 1 if node.is_a?(PgQuery::JoinExpr) }
           joins
         end
 
         # Maximum nesting depth of SELECT statements (a flat query is 1).
         def max_select_depth(node)
-          node = unwrap_node(node)
+          node = node.unwrap
           return 0 unless node.is_a?(Google::Protobuf::MessageExts)
 
           deepest_child = 0
-          each_ast_child(node) do |child|
+          node.each_child do |child|
             depth = max_select_depth(child)
             deepest_child = depth if depth > deepest_child
           end

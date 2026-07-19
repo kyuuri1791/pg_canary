@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+using PgCanary::PgQueryRefinement
+
 module PgCanary
   module Rules
     # Tier 2 (opt-in): equality/range predicates on columns with no index
@@ -29,11 +31,11 @@ module PgCanary
         # => { table => [column, ...] } for plain-column predicates in WHERE.
         def predicate_columns(_query, scope)
           result = Hash.new { |h, k| h[k] = [] }
-          walk_within_scope(scope.where_clause) do |node|
+          scope.where_clause.walk_scope do |node|
             next unless node.is_a?(PgQuery::A_Expr) && indexable_predicate?(node)
 
             [node.lexpr, node.rexpr].each do |side|
-              column_ref = unwrap_node(side)
+              column_ref = side&.unwrap
               next unless column_ref.is_a?(PgQuery::ColumnRef)
               next unless constant_side?(node, side)
 
@@ -45,7 +47,7 @@ module PgCanary
         end
 
         def indexable_predicate?(a_expr)
-          comparison_expr?(a_expr) ||
+          a_expr.comparison? ||
             %i[AEXPR_IN AEXPR_BETWEEN AEXPR_LIKE AEXPR_ILIKE].include?(a_expr.kind)
         end
 
@@ -53,12 +55,12 @@ module PgCanary
         # comparisons (join conditions in WHERE) are not our business here.
         def constant_side?(a_expr, column_side)
           other = a_expr.lexpr.equal?(column_side) ? a_expr.rexpr : a_expr.lexpr
-          node = strip_type_casts(other)
+          node = other&.strip_casts
           case node
           when PgQuery::A_Const, PgQuery::ParamRef
             true
           when PgQuery::List
-            node.items.all? { |i| strip_type_casts(i).is_a?(PgQuery::A_Const) || strip_type_casts(i).is_a?(PgQuery::ParamRef) }
+            node.items.all? { |i| i.strip_casts.is_a?(PgQuery::A_Const) || i.strip_casts.is_a?(PgQuery::ParamRef) }
           else
             false
           end

@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+using PgCanary::PgQueryRefinement
+
 module PgCanary
   module Rules
     # Searching an array column (@>, <@, &&, or value = ANY(column)) without
@@ -18,12 +20,12 @@ module PgCanary
         query.each_scope do |scope|
           next unless scope.where_clause
 
-          walk_within_scope(scope.where_clause) do |node|
+          scope.where_clause.walk_scope do |node|
             next unless node.is_a?(PgQuery::A_Expr)
 
             case node.kind
             when :AEXPR_OP
-              operator = operator_name(node)
+              operator = node.operator
               next unless ARRAY_OPS.include?(operator)
 
               detections << inspect_sides(query, scope, [node.lexpr, node.rexpr], operator)
@@ -39,7 +41,7 @@ module PgCanary
 
         def inspect_sides(query, scope, sides, operator)
           sides.each do |side|
-            column_ref = strip_type_casts(side)
+            column_ref = side&.strip_casts
             next unless column_ref.is_a?(PgQuery::ColumnRef)
 
             table, column = scope.resolve(column_ref)

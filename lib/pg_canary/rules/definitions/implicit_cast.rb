@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+using PgCanary::PgQueryRefinement
+
 module PgCanary
   module Rules
     # Comparing an integer-family column with a numeric/float literal
@@ -18,8 +20,8 @@ module PgCanary
         query.each_scope do |scope|
           next unless scope.where_clause
 
-          walk_within_scope(scope.where_clause) do |node|
-            next unless node.is_a?(PgQuery::A_Expr) && comparison_expr?(node)
+          scope.where_clause.walk_scope do |node|
+            next unless node.is_a?(PgQuery::A_Expr) && node.comparison?
 
             detections << inspect_comparison(query, scope, node)
           end
@@ -30,8 +32,8 @@ module PgCanary
       private
 
         def inspect_comparison(query, scope, expr)
-          left = unwrap_node(expr.lexpr)
-          right = unwrap_node(expr.rexpr)
+          left = expr.lexpr&.unwrap
+          right = expr.rexpr&.unwrap
 
           column_ref, value = if left.is_a?(PgQuery::ColumnRef)
                                 [left, right]
@@ -64,8 +66,8 @@ module PgCanary
           when PgQuery::A_Const
             node.val == :fval
           when PgQuery::TypeCast
-            type = string_values(node.type_name.names).last
-            NUMERIC_TYPE_NAMES.include?(type) && strip_type_casts(node).is_a?(PgQuery::A_Const)
+            type = node.type_name.names.string_values.last
+            NUMERIC_TYPE_NAMES.include?(type) && node.strip_casts.is_a?(PgQuery::A_Const)
           else
             false
           end

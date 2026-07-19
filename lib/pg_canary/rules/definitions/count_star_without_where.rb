@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+using PgCanary::PgQueryRefinement
+
 module PgCanary
   module Rules
     # Tier 2 (opt-in): SELECT COUNT(*) without WHERE. Because of MVCC,
@@ -41,11 +43,11 @@ module PgCanary
 
         def count_star?(stmt)
           stmt.target_list.any? do |target|
-            res_target = unwrap_node(target)
+            res_target = target.unwrap
             next false unless res_target.is_a?(PgQuery::ResTarget)
 
-            func = unwrap_node(res_target.val)
-            func.is_a?(PgQuery::FuncCall) && func.agg_star && function_name(func) == "count"
+            func = res_target.val&.unwrap
+            func.is_a?(PgQuery::FuncCall) && func.agg_star && func.function_name == "count"
           end
         end
     end

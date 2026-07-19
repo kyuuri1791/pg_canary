@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+using PgCanary::PgQueryRefinement
+
 module PgCanary
   module Rules
     # Searching a jsonb column in WHERE:
@@ -22,10 +24,10 @@ module PgCanary
         query.each_scope do |scope|
           next unless scope.where_clause
 
-          walk_within_scope(scope.where_clause) do |node|
+          scope.where_clause.walk_scope do |node|
             next unless node.is_a?(PgQuery::A_Expr) && node.kind == :AEXPR_OP
 
-            operator = operator_name(node)
+            operator = node.operator
             if CONTAINMENT_OPS.include?(operator)
               detections << inspect_containment(query, scope, node, operator)
             elsif EXTRACTION_OPS.include?(operator)
@@ -79,7 +81,7 @@ module PgCanary
         # First side that is a jsonb-typed, resolvable column.
         def jsonb_column(query, scope, sides)
           sides.each do |side|
-            column_ref = strip_type_casts(side)
+            column_ref = side&.strip_casts
             next unless column_ref.is_a?(PgQuery::ColumnRef)
 
             table, column = scope.resolve(column_ref)
@@ -93,10 +95,10 @@ module PgCanary
         end
 
         def extraction_key(expr)
-          const = strip_type_casts(expr.rexpr)
+          const = expr.rexpr&.strip_casts
           return nil unless const.is_a?(PgQuery::A_Const)
 
-          value = constant_value(const)
+          value = const.value
           value.is_a?(String) ? value : nil
         end
     end

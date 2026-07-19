@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+using PgCanary::PgQueryRefinement
+
 module PgCanary
   module Rules
     # Tier 2 (opt-in): OR conditions spanning different columns. PostgreSQL
@@ -16,7 +18,7 @@ module PgCanary
           next unless scope.where_clause
 
           seen = []
-          walk_within_scope(scope.where_clause) do |node|
+          scope.where_clause.walk_scope do |node|
             next unless node.is_a?(PgQuery::BoolExpr) && node.boolop == :OR_EXPR
 
             columns = predicate_columns(query, scope, node)
@@ -36,11 +38,11 @@ module PgCanary
         # column-vs-constant predicates.
         def predicate_columns(query, scope, bool_expr)
           columns = bool_expr.args.filter_map do |arg|
-            expr = unwrap_node(arg)
+            expr = arg.unwrap
             next nil unless expr.is_a?(PgQuery::A_Expr)
-            next nil unless comparison_expr?(expr) || %i[AEXPR_IN AEXPR_LIKE AEXPR_ILIKE].include?(expr.kind)
+            next nil unless expr.comparison? || %i[AEXPR_IN AEXPR_LIKE AEXPR_ILIKE].include?(expr.kind)
 
-            column_ref = strip_type_casts(expr.lexpr)
+            column_ref = expr.lexpr&.strip_casts
             next nil unless column_ref.is_a?(PgQuery::ColumnRef)
 
             resolved = scope.resolve(column_ref)

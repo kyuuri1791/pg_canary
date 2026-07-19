@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+using PgCanary::PgQueryRefinement
+
 module PgCanary
   module Rules
     # Tier 2 (opt-in): ORDER BY x LIMIT n without an index led by x forces a
@@ -20,7 +22,7 @@ module PgCanary
           sort_by = scope.sort_items.first
           next unless sort_by
 
-          column_ref = unwrap_node(sort_by.node)
+          column_ref = sort_by.node&.unwrap
           next unless column_ref.is_a?(PgQuery::ColumnRef)
 
           table, column = scope.resolve(column_ref)

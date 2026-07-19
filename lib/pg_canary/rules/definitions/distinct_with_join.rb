@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+using PgCanary::PgQueryRefinement
+
 module PgCanary
   module Rules
     # Tier 2 (opt-in): DISTINCT combined with JOIN. Frequently the DISTINCT
@@ -32,7 +34,7 @@ module PgCanary
       private
 
         def joined?(scope)
-          scope.stmt.from_clause.any? { |item| unwrap_node(item).is_a?(PgQuery::JoinExpr) }
+          scope.stmt.from_clause.any? { |item| item.unwrap.is_a?(PgQuery::JoinExpr) }
         end
     end
   end

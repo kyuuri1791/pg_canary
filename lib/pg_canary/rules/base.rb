@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+using PgCanary::PgQueryRefinement
+
 module PgCanary
   module Rules
     # Base class for detection rules.
@@ -8,8 +10,6 @@ module PgCanary
     # Configuration flows in explicitly through the QueryContext
     # (query.config); rules never reach for global state themselves.
     class Base
-      include PgQuerySupport
-
       class << self
         def all
           subclasses.sort_by(&:name)

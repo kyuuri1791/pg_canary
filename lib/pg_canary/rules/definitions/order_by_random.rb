@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+using PgCanary::PgQueryRefinement
+
 module PgCanary
   module Rules
     # ORDER BY RANDOM() sorts the entire result set just to pick rows —
@@ -13,9 +15,9 @@ module PgCanary
         detections = []
         query.each_scope do |scope|
           scope.sort_items.each do |sort_by|
-            func = unwrap_node(sort_by.node)
+            func = sort_by.node&.unwrap
             next unless func.is_a?(PgQuery::FuncCall)
-            next unless function_name(func) == "random"
+            next unless func.function_name == "random"
 
             detections << detection(
               query,

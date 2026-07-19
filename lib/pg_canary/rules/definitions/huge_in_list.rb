@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+using PgCanary::PgQueryRefinement
+
 module PgCanary
   module Rules
     # IN (...) / = ANY(...) with a huge number of values: the statement
@@ -22,7 +24,7 @@ module PgCanary
         query.each_scope do |scope|
           next unless scope.where_clause
 
-          walk_within_scope(scope.where_clause) do |node|
+          scope.where_clause.walk_scope do |node|
             next unless node.is_a?(PgQuery::A_Expr)
 
             count = value_count(query, node)
@@ -48,10 +50,10 @@ module PgCanary
         def value_count(query, a_expr)
           case a_expr.kind
           when :AEXPR_IN
-            list = unwrap_node(a_expr.rexpr)
+            list = a_expr.rexpr&.unwrap
             list.is_a?(PgQuery::List) ? list.items.length : nil
           when :AEXPR_OP_ANY
-            param = strip_type_casts(a_expr.rexpr)
+            param = a_expr.rexpr&.strip_casts
             return nil unless param.is_a?(PgQuery::ParamRef)
 
             value = query.bind_value(param.number)
@@ -60,7 +62,7 @@ module PgCanary
         end
 
         def resolve_lexpr(scope, a_expr)
-          column_ref = strip_type_casts(a_expr.lexpr)
+          column_ref = a_expr.lexpr&.strip_casts
           return nil unless column_ref.is_a?(PgQuery::ColumnRef)
 
           scope.resolve(column_ref)

@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+using PgCanary::PgQueryRefinement
+
 module PgCanary
   module Rules
     # Tier 2 (opt-in): join-condition columns with no index leading with
@@ -42,7 +44,7 @@ module PgCanary
         def join_columns(scope)
           columns = []
           scope.stmt.from_clause.each do |item|
-            collect_join_quals(unwrap_node(item)) do |quals|
+            collect_join_quals(item.unwrap) do |quals|
               columns.concat(equality_columns(scope, quals))
             end
           end
@@ -54,17 +56,17 @@ module PgCanary
           return unless node.is_a?(PgQuery::JoinExpr)
 
           yield node.quals if node.quals
-          collect_join_quals(unwrap_node(node.larg), &)
-          collect_join_quals(unwrap_node(node.rarg), &)
+          collect_join_quals(node.larg&.unwrap, &)
+          collect_join_quals(node.rarg&.unwrap, &)
         end
 
         def equality_columns(scope, clause)
           columns = []
-          walk_within_scope(clause) do |node|
-            next unless node.is_a?(PgQuery::A_Expr) && node.kind == :AEXPR_OP && operator_name(node) == "="
+          clause.walk_scope do |node|
+            next unless node.is_a?(PgQuery::A_Expr) && node.kind == :AEXPR_OP && node.operator == "="
 
-            left = unwrap_node(node.lexpr)
-            right = unwrap_node(node.rexpr)
+            left = node.lexpr&.unwrap
+            right = node.rexpr&.unwrap
             next unless left.is_a?(PgQuery::ColumnRef) && right.is_a?(PgQuery::ColumnRef)
 
             left_resolved = scope.resolve(left)

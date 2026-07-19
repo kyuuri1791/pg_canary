@@ -5,7 +5,7 @@ require "pg_query"
 
 require_relative "pg_canary/version"
 require_relative "pg_canary/configuration"
-require_relative "pg_canary/pg_query_support"
+require_relative "pg_canary/pg_query_refinement"
 require_relative "pg_canary/schema_introspection"
 require_relative "pg_canary/rules/detection"
 require_relative "pg_canary/rules/query_context"

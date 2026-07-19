@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+using PgCanary::PgQueryRefinement
+
 module PgCanary
   module Rules
     # NOT IN (SELECT ...) is a double trap: if the subquery ever returns a
@@ -15,11 +17,11 @@ module PgCanary
         query.each_scope do |scope|
           next unless scope.where_clause
 
-          walk_within_scope(scope.where_clause) do |node|
+          scope.where_clause.walk_scope do |node|
             next unless not_expr?(node)
 
             node.args.each do |arg|
-              sublink = unwrap_node(arg)
+              sublink = arg.unwrap
               next unless any_sublink?(sublink)
 
               detections << build(query, scope, sublink)
@@ -40,12 +42,12 @@ module PgCanary
           return false unless node.is_a?(PgQuery::SubLink)
           return false unless node.sub_link_type == :ANY_SUBLINK
 
-          operator = string_values(node.oper_name).last
+          operator = node.oper_name.string_values.last
           operator.nil? || operator == "="
         end
 
         def build(query, scope, sublink)
-          test = strip_type_casts(sublink.testexpr)
+          test = sublink.testexpr&.strip_casts
           table, column = test.is_a?(PgQuery::ColumnRef) ? scope.resolve(test) : nil
 
           detection(

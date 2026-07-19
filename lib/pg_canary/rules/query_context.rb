@@ -1,18 +1,16 @@
 # frozen_string_literal: true
 
+using PgCanary::PgQueryRefinement
+
 module PgCanary
   module Rules
     # What a rule's #check receives: everything about one executed query —
     # the parsed AST (as Scopes), bind parameter values, the configuration,
     # and access to schema metadata via the connection the query ran on.
     class QueryContext
-      include PgQuerySupport
-
       # One SELECT scope (top-level statement, CTE, subquery, ...) with its
       # own FROM-clause alias resolution.
       class Scope
-        include PgQuerySupport
-
         attr_reader :stmt, :aliases
 
         def initialize(stmt)
@@ -27,7 +25,7 @@ module PgCanary
 
         # => [PgQuery::SortBy]
         def sort_items
-          stmt.sort_clause.map { |n| unwrap_node(n) }.grep(PgQuery::SortBy)
+          stmt.sort_clause.map(&:unwrap).grep(PgQuery::SortBy)
         end
 
         def limited?
@@ -43,7 +41,7 @@ module PgCanary
         # cannot be attributed to a real table unambiguously (unknown alias,
         # subquery output, multiple candidate tables for an unqualified ref).
         def resolve(column_ref)
-          fields = column_ref_fields(column_ref)
+          fields = column_ref.field_names
           return nil if fields.nil? || fields.empty?
 
           column = fields.last
@@ -58,7 +56,7 @@ module PgCanary
         private
 
           def collect_aliases(from_clause)
-            from_clause.each { |node| collect_from_node(unwrap_node(node)) }
+            from_clause.each { |node| collect_from_node(node.unwrap) }
           end
 
           def collect_from_node(node)
@@ -68,8 +66,8 @@ module PgCanary
               name = node.relname if name.nil? || name.empty?
               @aliases[name] = node.relname
             when PgQuery::JoinExpr
-              collect_from_node(unwrap_node(node.larg))
-              collect_from_node(unwrap_node(node.rarg))
+              collect_from_node(node.larg&.unwrap)
+              collect_from_node(node.rarg&.unwrap)
             when PgQuery::RangeSubselect
               name = node.alias&.aliasname
               @aliases[name] = nil if name && !name.empty?
@@ -99,7 +97,7 @@ module PgCanary
         @scopes ||= begin
           stmts = []
           parse_result.tree.stmts.each do |raw|
-            walk_ast(raw.stmt) { |msg| stmts << msg if msg.is_a?(PgQuery::SelectStmt) }
+            raw.stmt.walk { |msg| stmts << msg if msg.is_a?(PgQuery::SelectStmt) }
           end
           stmts.map { |s| Scope.new(s) }
         end

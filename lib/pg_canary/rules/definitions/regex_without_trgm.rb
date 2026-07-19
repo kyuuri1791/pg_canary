@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+using PgCanary::PgQueryRefinement
+
 module PgCanary
   module Rules
     # Regular-expression search (~, ~*, SIMILAR TO) cannot use a plain btree
@@ -19,13 +21,13 @@ module PgCanary
         query.each_scope do |scope|
           next unless scope.where_clause
 
-          walk_within_scope(scope.where_clause) do |node|
+          scope.where_clause.walk_scope do |node|
             next unless node.is_a?(PgQuery::A_Expr)
 
             operator = display_operator(node)
             next unless operator
 
-            column_ref = strip_type_casts(node.lexpr)
+            column_ref = node.lexpr&.strip_casts
             next unless column_ref.is_a?(PgQuery::ColumnRef)
 
             table, column = scope.resolve(column_ref)
@@ -55,7 +57,7 @@ module PgCanary
         def display_operator(a_expr)
           case a_expr.kind
           when :AEXPR_OP
-            operator = operator_name(a_expr)
+            operator = a_expr.operator
             REGEX_OPS.include?(operator) ? operator : nil
           when :AEXPR_SIMILAR
             "SIMILAR TO"

@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+using PgCanary::PgQueryRefinement
+
 module PgCanary
   module Rules
     # LIKE / ILIKE with a leading wildcard ('%foo', '%foo%') cannot use a
@@ -20,7 +22,7 @@ module PgCanary
         query.each_scope do |scope|
           next unless scope.where_clause
 
-          walk_within_scope(scope.where_clause) do |node|
+          scope.where_clause.walk_scope do |node|
             detections << inspect_expr(query, scope, node) if like_expr?(node)
           end
         end
@@ -34,7 +36,7 @@ module PgCanary
         end
 
         def inspect_expr(query, scope, expr)
-          column_ref = strip_type_casts(expr.lexpr)
+          column_ref = expr.lexpr&.strip_casts
           return nil unless column_ref.is_a?(PgQuery::ColumnRef)
 
           pattern = pattern_value(query, expr.rexpr)
@@ -62,10 +64,10 @@ module PgCanary
 
         # Pattern string from a literal, a cast literal, or a bind parameter.
         def pattern_value(query, rexpr)
-          node = strip_type_casts(rexpr)
+          node = rexpr&.strip_casts
           case node
           when PgQuery::A_Const
-            value = constant_value(node)
+            value = node.value
             value.is_a?(String) ? value : nil
           when PgQuery::ParamRef
             value = query.bind_value(node.number)

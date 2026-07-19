@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+using PgCanary::PgQueryRefinement
+
 module PgCanary
   module Rules
     # A column wrapped in a function inside WHERE (lower(email) = ?,
@@ -18,7 +20,7 @@ module PgCanary
         query.each_scope do |scope|
           next unless scope.where_clause
 
-          walk_within_scope(scope.where_clause) do |node|
+          scope.where_clause.walk_scope do |node|
             next unless node.is_a?(PgQuery::A_Expr) && CHECKED_KINDS.include?(node.kind)
 
             [node.lexpr, node.rexpr].each do |side|
@@ -35,14 +37,14 @@ module PgCanary
         # e.g. lower(trim(email))).
         def first_column_ref(node)
           found = nil
-          walk_within_scope(node) do |msg|
+          node.walk_scope do |msg|
             found ||= msg if msg.is_a?(PgQuery::ColumnRef)
           end
           found
         end
 
         def inspect_side(query, scope, side)
-          func = strip_type_casts(side)
+          func = side&.strip_casts
           return nil unless func.is_a?(PgQuery::FuncCall)
 
           column_ref = first_column_ref(func)
@@ -52,7 +54,7 @@ module PgCanary
           return nil unless table && column
           return nil unless applicable_table?(query, table)
 
-          func_name = function_name(func)
+          func_name = func.function_name
           return nil if expression_index?(query, table, column, func_name)
 
           detection(

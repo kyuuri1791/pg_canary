@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+using PgCanary::PgQueryRefinement
+
 module PgCanary
   module Rules
     # Tier 2 (opt-in): SELECT * (ActiveRecord's default) on a table that has
@@ -45,13 +47,13 @@ module PgCanary
         def star_tables(scope)
           tables = []
           scope.stmt.target_list.each do |target|
-            res_target = unwrap_node(target)
+            res_target = target.unwrap
             next unless res_target.is_a?(PgQuery::ResTarget)
 
-            column_ref = unwrap_node(res_target.val)
+            column_ref = res_target.val&.unwrap
             next unless column_ref.is_a?(PgQuery::ColumnRef)
 
-            fields = column_ref.fields.map { |f| unwrap_node(f) }
+            fields = column_ref.fields.map(&:unwrap)
             next unless fields.last.is_a?(PgQuery::A_Star)
 
             qualifier = fields[-2]

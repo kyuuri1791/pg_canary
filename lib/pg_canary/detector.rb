@@ -2,6 +2,8 @@
 
 require "active_support/backtrace_cleaner"
 
+using PgCanary::PgQueryRefinement
+
 module PgCanary
   # Parses an event's SQL into a QueryContext, runs every enabled rule
   # against it, and filters ignored tables. Each returned Detection carries
@@ -9,8 +11,6 @@ module PgCanary
   # repeatedly (e.g. an N+1 loop within one request) can collapse them —
   # see Middleware.
   class Detector
-    include PgQuerySupport
-
     # Swallows the configuration whole at construction: pg_canary treats it
     # as fixed after boot (set in an initializer).
     def initialize(config)
@@ -42,7 +42,7 @@ module PgCanary
       # nil for anything that is not a plain SELECT (or fails to parse).
       def build_query(payload)
         parse_result = PgQuery.parse(payload[:sql])
-        stmt = unwrap_node(parse_result.tree.stmts.first&.stmt)
+        stmt = parse_result.tree.stmts.first&.stmt&.unwrap
         return nil unless stmt.is_a?(PgQuery::SelectStmt)
 
         Rules::QueryContext.new(

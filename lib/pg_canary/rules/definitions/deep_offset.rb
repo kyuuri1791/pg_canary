@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+using PgCanary::PgQueryRefinement
+
 module PgCanary
   module Rules
     # OFFSET-based pagination reads and throws away every skipped row, so
@@ -41,10 +43,10 @@ module PgCanary
       private
 
         def numeric_value(query, node)
-          node = strip_type_casts(node)
+          node = node&.strip_casts
           case node
           when PgQuery::A_Const
-            value = constant_value(node)
+            value = node.value
             value.is_a?(Numeric) ? value.to_i : nil
           when PgQuery::ParamRef
             begin

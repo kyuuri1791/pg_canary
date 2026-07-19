@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+using PgCanary::PgQueryRefinement
+
 module PgCanary
   module Rules
     # A scalar subquery in the SELECT list that references the outer table
@@ -13,10 +15,10 @@ module PgCanary
         detections = []
         query.each_scope do |scope|
           scope.stmt.target_list.each do |target|
-            res_target = unwrap_node(target)
+            res_target = target.unwrap
             next unless res_target.is_a?(PgQuery::ResTarget)
 
-            walk_within_scope(res_target.val) do |node|
+            res_target.val.walk_scope do |node|
               next unless node.is_a?(PgQuery::SubLink) && node.sub_link_type == :EXPR_SUBLINK
 
               table, column = correlated_reference(node, scope)
@@ -43,15 +45,15 @@ module PgCanary
         # [table, column] of the first outer-scope reference inside the
         # subquery, or nil when the subquery is self-contained.
         def correlated_reference(sublink, outer_scope)
-          subselect = unwrap_node(sublink.subselect)
+          subselect = sublink.subselect&.unwrap
           return nil unless subselect.is_a?(PgQuery::SelectStmt)
 
           inner_names = inner_relation_names(subselect)
           found = nil
-          walk_ast(subselect) do |node|
+          subselect.walk do |node|
             next unless found.nil? && node.is_a?(PgQuery::ColumnRef)
 
-            fields = column_ref_fields(node)
+            fields = node.field_names
             next unless fields && fields.length >= 2
             next if inner_names.include?(fields[-2])
 
@@ -63,7 +65,7 @@ module PgCanary
         # Every relation name/alias visible anywhere inside the subquery.
         def inner_relation_names(subselect)
           names = []
-          walk_ast(subselect) do |node|
+          subselect.walk do |node|
             next unless node.is_a?(PgQuery::RangeVar)
 
             names << node.relname

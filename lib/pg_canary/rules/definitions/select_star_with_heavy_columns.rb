@@ -9,12 +9,10 @@ module PgCanary
     # query. Whether that matters depends on the data, hence opt-in.
     # Heavy types: config.rules.select_star_with_heavy_columns.heavy_types.
     class SelectStarWithHeavyColumns < Base
+      option :heavy_types, default: %w[bytea jsonb text].freeze
+
       def default_enabled
         false
-      end
-
-      def self.options
-        { heavy_types: %w[bytea jsonb text].freeze }
       end
 
       def check(query)

@@ -9,12 +9,11 @@ module PgCanary
     #   config.rules.query_complexity.max_joins (default 8)
     #   config.rules.query_complexity.max_depth (default 4)
     class QueryComplexity < Base
+      option :max_joins, default: 8
+      option :max_depth, default: 4
+
       def default_enabled
         false
-      end
-
-      def self.options
-        { max_joins: 8, max_depth: 4 }
       end
 
       def check(query)

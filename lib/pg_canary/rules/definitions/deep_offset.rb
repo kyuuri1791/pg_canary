@@ -9,12 +9,10 @@ module PgCanary
     # bind ($n), which static SQL linters cannot do.
     # Threshold: config.rules.deep_offset.threshold (default 1000).
     class DeepOffset < Base
+      option :threshold, default: 1000
+
       def default_enabled
         true
-      end
-
-      def self.options
-        { threshold: 1000 }
       end
 
       def check(query)

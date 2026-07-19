@@ -22,10 +22,12 @@ module PgCanary
                              .downcase.to_sym
         end
 
-        # Rule-specific options and their defaults, e.g. { threshold: 1000 }.
-        # Declared statically so RuleConfig can generate real accessors.
+        def option(name, default:)
+          options[name] = default
+        end
+
         def options
-          {}
+          @options ||= {}
         end
       end
 

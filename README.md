@@ -15,7 +15,7 @@ end
 
 ## Detection rules
 
-### Tier 1 — enabled by default (suspicious regardless of table size)
+### Enabled by default — suspicious regardless of table size
 
 | Rule | Detects | Rationale |
 |---|---|---|
@@ -37,7 +37,7 @@ Notes:
 - `deep_offset` and `huge_in_list` read the **runtime bind values** (`OFFSET $1`, array binds) from the `sql.active_record` event — static SQL linters that only see query text cannot do this. `leading_wildcard_like` uses the same mechanism for `LIKE $1`.
 - `function_on_column` matches expression indexes by (function name, column name) — a deliberate approximation rather than full location-insensitive AST equality, which is sufficient in practice
 
-### Tier 2 — disabled by default (opt-in)
+### Opt-in — disabled by default; value depends on your data
 
 | Rule | Detects |
 |---|---|
@@ -66,7 +66,7 @@ Once opted in, keep false positives down by listing small tables in `config.igno
 
 ## Configuration
 
-Everything works with the defaults; an initializer is only needed to change them — e.g. to enable Tier 2 rules:
+Everything works with the defaults; an initializer is only needed to change them — e.g. to enable opt-in rules:
 
 ```ruby
 # config/initializers/pg_canary.rb

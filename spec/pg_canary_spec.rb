@@ -29,7 +29,6 @@ RSpec.describe PgCanary do
 
   it "raises on unknown rule names in config (typo protection)" do
     expect { PgCanary.config.rules.unindexd_where }.to raise_error(NoMethodError)
-    expect { PgCanary.config.rules[:unindexd_where] }.to raise_error(KeyError)
   end
 
   it "raises on unknown rule options" do

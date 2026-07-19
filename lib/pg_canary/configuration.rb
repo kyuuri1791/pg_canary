@@ -2,14 +2,7 @@
 
 module PgCanary
   class Configuration
-    # nil means "not explicitly configured" — the Railtie then enables
-    # pg_canary in development/test only.
-    attr_accessor :enabled
-
-    # False-positive controls
-    attr_accessor :ignore_tables
-
-    attr_accessor :logger, :app_root
+    attr_accessor :enabled, :ignore_tables, :logger, :app_root
     attr_reader :rules
 
     def initialize
@@ -25,30 +18,15 @@ module PgCanary
     end
   end
 
-  # Exposes one RuleConfig per built-in rule, both as methods and via [].
-  #
-  #   config.rules.unindexed_where.enabled = true
-  #   config.rules[:deep_offset].threshold = 2000
   class RulesConfig
     def initialize
-      @configs = {}
       Rules::Base.all.each do |klass|
         rule_config = RuleConfig.new(klass.options)
-        @configs[klass.rule_name] = rule_config
         define_singleton_method(klass.rule_name) { rule_config }
       end
     end
-
-    def [](name)
-      @configs.fetch(name.to_sym)
-    end
   end
 
-  # Per-rule settings. `enabled` defaults to nil, meaning "use the rule
-  # class's default". Accessors for rule-specific options
-  # (e.g. config.rules.deep_offset.threshold = 2000) are generated from the
-  # rule class's declared options, so a typo raises NoMethodError instead of
-  # silently creating a setting nobody reads.
   class RuleConfig
     attr_accessor :enabled
 
@@ -58,10 +36,6 @@ module PgCanary
         define_singleton_method(name) { @options[name] }
         define_singleton_method(:"#{name}=") { |value| @options[name] = value }
       end
-    end
-
-    def [](key)
-      @options.fetch(key.to_sym)
     end
   end
 end

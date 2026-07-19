@@ -40,7 +40,7 @@ module PgCanary
         end
 
         def enabled?(config)
-          setting = config.rules[rule_name].enabled
+          setting = config.rules.public_send(rule_name).enabled
           setting.nil? ? default_enabled : setting
         end
 
@@ -99,7 +99,7 @@ module PgCanary
         end
 
         def rule_config
-          config.rules[self.class.rule_name]
+          config.rules.public_send(self.class.rule_name)
         end
 
         def applicable_table?(table)

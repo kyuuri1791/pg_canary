@@ -15,7 +15,11 @@ module PgCanary
     def initialize(config)
       @config = config
       @rule_classes = Rules::Base.all.select { |klass| klass.enabled?(config) }
-      @backtrace_cleaner = build_backtrace_cleaner(config.app_root)
+      @backtrace_cleaner = ActiveSupport::BacktraceCleaner.new.tap do |cleaner|
+        root = config.app_root
+        cleaner.add_silencer { |line| line.include?("lib/pg_canary") }
+        cleaner.add_filter { |line| line.delete_prefix("#{root}/") } if root
+      end
     end
 
     # => [Detection] the detections that should be notified.
@@ -87,13 +91,6 @@ module PgCanary
         end
 
         false
-      end
-
-      def build_backtrace_cleaner(root)
-        ActiveSupport::BacktraceCleaner.new.tap do |cleaner|
-          cleaner.add_silencer { |line| line.include?("lib/pg_canary") }
-          cleaner.add_filter { |line| line.delete_prefix("#{root}/") } if root
-        end
       end
 
       # The application frame that triggered the query.

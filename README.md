@@ -15,7 +15,7 @@ end
 
 ## Detection rules
 
-### Enabled by default — suspicious regardless of table size
+### Enabled by default
 
 | Rule | Detects | Rationale |
 |---|---|---|
@@ -37,7 +37,7 @@ Notes:
 - `deep_offset` and `huge_in_list` read the **runtime bind values** (`OFFSET $1`, array binds) from the `sql.active_record` event — static SQL linters that only see query text cannot do this. `leading_wildcard_like` uses the same mechanism for `LIKE $1`.
 - `function_on_column` matches expression indexes by (function name, column name) — a deliberate approximation rather than full location-insensitive AST equality, which is sufficient in practice
 
-### Opt-in — disabled by default; value depends on your data
+### Disabled by default
 
 | Rule | Detects |
 |---|---|

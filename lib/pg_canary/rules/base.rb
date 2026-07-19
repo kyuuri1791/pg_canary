@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+require "active_support/core_ext/string/inflections"
+
 using PgCanary::PgQueryRefinement
 
 module PgCanary
@@ -16,9 +18,7 @@ module PgCanary
 
         # :leading_wildcard_like for LeadingWildcardLike
         def rule_name
-          @rule_name ||= name.split("::").last
-                             .gsub(/([a-z\d])([A-Z])/, '\1_\2')
-                             .downcase.to_sym
+          @rule_name ||= name.demodulize.underscore.to_sym
         end
 
         def option(name, default:)

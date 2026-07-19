@@ -11,15 +11,15 @@ module PgCanary
     class UnindexedWhere < Base
       default_enabled false
 
-      def check(query)
-        query.each_scope.with_object([]) do |scope, detections|
+      def check
+        each_scope.with_object([]) do |scope, detections|
           next unless scope.where_clause
 
-          predicate_columns(query, scope).each do |table, columns|
-            next unless applicable_table?(query, table)
-            next if served_by_index?(query, table, columns)
+          predicate_columns(scope).each do |table, columns|
+            next unless applicable_table?(table)
+            next if served_by_index?(table, columns)
 
-            detections << build(query, table, columns)
+            detections << build(table, columns)
           end
         end
       end
@@ -27,7 +27,7 @@ module PgCanary
       private
 
         # => { table => [column, ...] } for plain-column predicates in WHERE.
-        def predicate_columns(_query, scope)
+        def predicate_columns(scope)
           result = Hash.new { |h, k| h[k] = [] }
           scope.where_clause.walk_scope do |node|
             next unless node.is_a?(PgQuery::A_Expr) && indexable_predicate?(node)
@@ -66,16 +66,15 @@ module PgCanary
 
         # Leftmost-prefix rule: an index helps when its leading column is one
         # of the predicate columns.
-        def served_by_index?(query, table, columns)
-          query.indexes(table).any? do |index|
+        def served_by_index?(table, columns)
+          indexes(table).any? do |index|
             index.leading_column && columns.include?(index.leading_column)
           end
         end
 
-        def build(query, table, columns)
+        def build(table, columns)
           column_list = columns.join(", ")
           detection(
-            query,
             table: table,
             columns: columns,
             message: "No index leads with any of the WHERE predicate columns (#{table}.#{column_list}). " \

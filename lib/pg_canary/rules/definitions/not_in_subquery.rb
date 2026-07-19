@@ -10,9 +10,9 @@ module PgCanary
     class NotInSubquery < Base
       default_enabled true
 
-      def check(query)
+      def check
         detections = []
-        query.each_scope do |scope|
+        each_scope do |scope|
           next unless scope.where_clause
 
           scope.where_clause.walk_scope do |node|
@@ -22,7 +22,7 @@ module PgCanary
               sublink = arg.unwrap
               next unless any_sublink?(sublink)
 
-              detections << build(query, scope, sublink)
+              detections << build(scope, sublink)
             end
           end
         end
@@ -44,12 +44,11 @@ module PgCanary
           operator.nil? || operator == "="
         end
 
-        def build(query, scope, sublink)
+        def build(scope, sublink)
           test = sublink.testexpr&.strip_casts
           table, column = test.is_a?(PgQuery::ColumnRef) ? scope.resolve(test) : nil
 
           detection(
-            query,
             table: table,
             columns: column,
             message: "NOT IN (SELECT ...) returns zero rows if the subquery yields even one NULL, " \

@@ -13,10 +13,10 @@ module PgCanary
       option :max_joins, default: 8
       option :max_depth, default: 4
 
-      def check(query)
-        max_joins = rule_config(query).max_joins
-        max_depth = rule_config(query).max_depth
-        stmt = query.parse_result.tree.stmts.first&.stmt
+      def check
+        max_joins = rule_config.max_joins
+        max_depth = rule_config.max_depth
+        stmt = parse_result.tree.stmts.first&.stmt
         return [] unless stmt
 
         problems = []
@@ -27,7 +27,6 @@ module PgCanary
         return [] if problems.empty?
 
         [detection(
-          query,
           message: "Query complexity exceeds thresholds: #{problems.join(", ")}.",
           suggestion: "Consider splitting the query, precomputing intermediate results, " \
                       "or reviewing whether every join/subquery is necessary."

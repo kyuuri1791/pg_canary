@@ -13,15 +13,15 @@ module PgCanary
       INTEGER_TYPES = %w[smallint integer bigint].freeze
       NUMERIC_TYPE_NAMES = %w[numeric decimal float4 float8].freeze
 
-      def check(query)
+      def check
         detections = []
-        query.each_scope do |scope|
+        each_scope do |scope|
           next unless scope.where_clause
 
           scope.where_clause.walk_scope do |node|
             next unless node.is_a?(PgQuery::A_Expr) && node.comparison?
 
-            detections << inspect_comparison(query, scope, node)
+            detections << inspect_comparison(scope, node)
           end
         end
         detections.compact
@@ -29,7 +29,7 @@ module PgCanary
 
       private
 
-        def inspect_comparison(query, scope, expr)
+        def inspect_comparison(scope, expr)
           left = expr.lexpr&.unwrap
           right = expr.rexpr&.unwrap
 
@@ -43,16 +43,15 @@ module PgCanary
 
           table, column = scope.resolve(column_ref)
           return nil unless table && column
-          return nil unless applicable_table?(query, table)
+          return nil unless applicable_table?(table)
 
-          column_type = query.column_type(table, column)
-          return nil unless INTEGER_TYPES.include?(column_type)
+          type = column_type(table, column)
+          return nil unless INTEGER_TYPES.include?(type)
 
           detection(
-            query,
             table: table,
             columns: column,
-            message: "Comparing #{table}.#{column} (#{column_type}) with a numeric literal implicitly " \
+            message: "Comparing #{table}.#{column} (#{type}) with a numeric literal implicitly " \
                      "casts the column to numeric, disabling any index on #{column}.",
             suggestion: "Use a literal that matches the column type (integer)."
           )

@@ -6,9 +6,8 @@ module PgCanary
   module Rules
     # Base class for detection rules.
     #
-    # A rule implements #check(query) and returns an array of Detection.
-    # Configuration flows in explicitly through the QueryContext
-    # (query.config); rules never reach for global state themselves.
+    # A rule instance is built per analyzed query, holds that query's state,
+    # and implements #check returning an array of Detection.
     class Base
       class << self
         def all
@@ -46,24 +45,67 @@ module PgCanary
         end
       end
 
-      def check(_query)
+      def initialize(sql:, config:, connection:, parse_result:, scopes:, binds: [], type_casted_binds: nil)
+        @sql = sql
+        @config = config
+        @connection = connection
+        @parse_result = parse_result
+        @scopes = scopes
+        @binds = binds || []
+        @type_casted_binds = type_casted_binds
+      end
+
+      def check
         raise NotImplementedError, "#{self.class} must implement #check"
       end
 
       private
 
-        def rule_config(query)
-          query.config.rules[self.class.rule_name]
+        attr_reader :sql, :config, :connection, :parse_result, :scopes
+
+        def each_scope(&)
+          scopes.each(&)
         end
 
-        def applicable_table?(query, table)
-          !query.config.ignore_table?(table)
+        # Value for a ParamRef ($n, 1-based). nil when unknown.
+        def bind_value(number)
+          index = number - 1
+          return nil if index.negative?
+
+          casted = @type_casted_binds
+          return casted[index] if casted.is_a?(Array) && index < casted.length
+
+          bind = @binds[index]
+          return nil if bind.nil?
+
+          bind.respond_to?(:value_for_database) ? bind.value_for_database : bind
         end
 
-        def detection(query, message:, suggestion: nil, table: nil, columns: nil)
+        def indexes(table)
+          SchemaIntrospection.indexes(connection, table)
+        end
+
+        def column_type(table, column)
+          SchemaIntrospection.column_type(connection, table, column)
+        end
+
+        # => { column_name => sql_type }
+        def column_types(table)
+          SchemaIntrospection.column_types(connection, table)
+        end
+
+        def rule_config
+          config.rules[self.class.rule_name]
+        end
+
+        def applicable_table?(table)
+          !config.ignore_table?(table)
+        end
+
+        def detection(message:, suggestion: nil, table: nil, columns: nil)
           Detection.new(
             rule_name: self.class.rule_name,
-            sql: query.sql,
+            sql: sql,
             table: table,
             columns: Array(columns),
             message: message,

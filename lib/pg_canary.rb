@@ -8,7 +8,7 @@ require_relative "pg_canary/configuration"
 require_relative "pg_canary/pg_query_refinement"
 require_relative "pg_canary/rules/schema_introspection"
 require_relative "pg_canary/rules/detection"
-require_relative "pg_canary/rules/query_context"
+require_relative "pg_canary/rules/scope"
 require_relative "pg_canary/rules/base"
 require_relative "pg_canary/rules/index_predicates"
 Dir[File.join(__dir__, "pg_canary", "rules", "definitions", "*.rb")].each { |file| require file }

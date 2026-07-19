@@ -9,9 +9,9 @@ module PgCanary
     class CountStarWithoutWhere < Base
       default_enabled false
 
-      def check(query)
+      def check
         detections = []
-        query.each_scope do |scope|
+        each_scope do |scope|
           stmt = scope.stmt
           next if stmt.where_clause || stmt.group_clause.any?
           next unless count_star?(stmt)
@@ -20,10 +20,9 @@ module PgCanary
           next unless tables.length == 1
 
           table = tables.first
-          next unless applicable_table?(query, table)
+          next unless applicable_table?(table)
 
           detections << detection(
-            query,
             table: table,
             message: "COUNT(*) without WHERE scans the whole #{table} table — PostgreSQL's MVCC " \
                      "has no O(1) row count.",

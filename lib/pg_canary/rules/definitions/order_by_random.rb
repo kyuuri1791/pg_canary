@@ -9,16 +9,15 @@ module PgCanary
     class OrderByRandom < Base
       default_enabled true
 
-      def check(query)
+      def check
         detections = []
-        query.each_scope do |scope|
+        each_scope do |scope|
           scope.sort_items.each do |sort_by|
             func = sort_by.node&.unwrap
             next unless func.is_a?(PgQuery::FuncCall)
             next unless func.function_name == "random"
 
             detections << detection(
-              query,
               table: scope.tables.length == 1 ? scope.tables.first : nil,
               message: "ORDER BY RANDOM() reads and sorts every row, so it gets slower " \
                        "in proportion to table size.",

@@ -12,15 +12,14 @@ module PgCanary
 
       include IndexPredicates
 
-      def check(query)
+      def check
         detections = []
-        query.each_scope do |scope|
+        each_scope do |scope|
           join_columns(scope).each do |table, column|
-            next unless applicable_table?(query, table)
-            next if index_leading_with?(query, table, column)
+            next unless applicable_table?(table)
+            next if index_leading_with?(table, column)
 
             detections << detection(
-              query,
               table: table,
               columns: column,
               message: "Join condition on #{table}.#{column} has no index leading with it — " \

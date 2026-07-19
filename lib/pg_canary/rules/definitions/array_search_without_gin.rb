@@ -13,9 +13,9 @@ module PgCanary
 
       ARRAY_OPS = %w[@> <@ &&].freeze
 
-      def check(query)
+      def check
         detections = []
-        query.each_scope do |scope|
+        each_scope do |scope|
           next unless scope.where_clause
 
           scope.where_clause.walk_scope do |node|
@@ -26,9 +26,9 @@ module PgCanary
               operator = node.operator
               next unless ARRAY_OPS.include?(operator)
 
-              detections << inspect_sides(query, scope, [node.lexpr, node.rexpr], operator)
+              detections << inspect_sides(scope, [node.lexpr, node.rexpr], operator)
             when :AEXPR_OP_ANY
-              detections << inspect_sides(query, scope, [node.rexpr], "= ANY(column)")
+              detections << inspect_sides(scope, [node.rexpr], "= ANY(column)")
             end
           end
         end
@@ -37,19 +37,18 @@ module PgCanary
 
       private
 
-        def inspect_sides(query, scope, sides, operator)
+        def inspect_sides(scope, sides, operator)
           sides.each do |side|
             column_ref = side&.strip_casts
             next unless column_ref.is_a?(PgQuery::ColumnRef)
 
             table, column = scope.resolve(column_ref)
             next unless table && column
-            next unless applicable_table?(query, table)
-            next unless array_type?(query.column_type(table, column))
-            next if gin_index_on?(query, table, column)
+            next unless applicable_table?(table)
+            next unless array_type?(column_type(table, column))
+            next if gin_index_on?(table, column)
 
             return detection(
-              query,
               table: table,
               columns: column,
               message: "Array search (#{operator}) on #{table}.#{column} has no GIN index " \

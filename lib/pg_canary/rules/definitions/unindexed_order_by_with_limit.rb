@@ -12,9 +12,9 @@ module PgCanary
 
       include IndexPredicates
 
-      def check(query)
+      def check
         detections = []
-        query.each_scope do |scope|
+        each_scope do |scope|
           next unless scope.limited?
 
           sort_by = scope.sort_items.first
@@ -25,11 +25,10 @@ module PgCanary
 
           table, column = scope.resolve(column_ref)
           next unless table && column
-          next unless applicable_table?(query, table)
-          next if index_leading_with?(query, table, column)
+          next unless applicable_table?(table)
+          next if index_leading_with?(table, column)
 
           detections << detection(
-            query,
             table: table,
             columns: column,
             message: "ORDER BY #{column} LIMIT sorts every row before the limit can apply " \

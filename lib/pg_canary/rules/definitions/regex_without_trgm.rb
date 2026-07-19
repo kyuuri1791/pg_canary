@@ -14,9 +14,9 @@ module PgCanary
 
       REGEX_OPS = %w[~ ~* !~ !~*].freeze
 
-      def check(query)
+      def check
         detections = []
-        query.each_scope do |scope|
+        each_scope do |scope|
           next unless scope.where_clause
 
           scope.where_clause.walk_scope do |node|
@@ -30,11 +30,10 @@ module PgCanary
 
             table, column = scope.resolve(column_ref)
             next unless table && column
-            next unless applicable_table?(query, table)
-            next if trgm_index?(query, table, column)
+            next unless applicable_table?(table)
+            next if trgm_index?(table, column)
 
             detections << detection(
-              query,
               table: table,
               columns: column,
               message: "Regular-expression search (#{operator}) on #{table}.#{column} cannot use " \

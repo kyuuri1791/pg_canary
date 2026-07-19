@@ -9,9 +9,9 @@ module PgCanary
     class CorrelatedSubqueryInSelect < Base
       default_enabled true
 
-      def check(query)
+      def check
         detections = []
-        query.each_scope do |scope|
+        each_scope do |scope|
           scope.stmt.target_list.each do |target|
             res_target = target.unwrap
             next unless res_target.is_a?(PgQuery::ResTarget)
@@ -21,10 +21,9 @@ module PgCanary
 
               table, column = correlated_reference(node, scope)
               next unless table && column
-              next unless applicable_table?(query, table)
+              next unless applicable_table?(table)
 
               detections << detection(
-                query,
                 table: table,
                 columns: column,
                 message: "Scalar subquery in the SELECT list references #{table}.#{column} from the " \

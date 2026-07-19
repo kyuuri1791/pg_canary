@@ -11,12 +11,11 @@ module PgCanary
     class UnionInsteadOfUnionAll < Base
       default_enabled false
 
-      def check(query)
-        union = query.scopes.find { |scope| scope.stmt.op == :SETOP_UNION && !scope.stmt.all }
+      def check
+        union = scopes.find { |scope| scope.stmt.op == :SETOP_UNION && !scope.stmt.all }
         return [] unless union
 
         [detection(
-          query,
           message: "UNION (without ALL) sorts/hashes the entire combined result to remove duplicates.",
           suggestion: "If the branches cannot produce overlapping rows — or duplicates are acceptable — use UNION ALL."
         )]

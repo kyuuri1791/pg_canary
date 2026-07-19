@@ -15,13 +15,13 @@ module PgCanary
 
       LIKE_KINDS = %i[AEXPR_LIKE AEXPR_ILIKE].freeze
 
-      def check(query)
+      def check
         detections = []
-        query.each_scope do |scope|
+        each_scope do |scope|
           next unless scope.where_clause
 
           scope.where_clause.walk_scope do |node|
-            detections << inspect_expr(query, scope, node) if like_expr?(node)
+            detections << inspect_expr(scope, node) if like_expr?(node)
           end
         end
         detections.compact
@@ -33,21 +33,20 @@ module PgCanary
           node.is_a?(PgQuery::A_Expr) && LIKE_KINDS.include?(node.kind)
         end
 
-        def inspect_expr(query, scope, expr)
+        def inspect_expr(scope, expr)
           column_ref = expr.lexpr&.strip_casts
           return nil unless column_ref.is_a?(PgQuery::ColumnRef)
 
-          pattern = pattern_value(query, expr.rexpr)
+          pattern = pattern_value(expr.rexpr)
           return nil unless pattern&.start_with?("%", "_")
 
           table, column = scope.resolve(column_ref)
           return nil unless table && column
-          return nil unless applicable_table?(query, table)
-          return nil if trgm_index?(query, table, column)
+          return nil unless applicable_table?(table)
+          return nil if trgm_index?(table, column)
 
           operator = expr.kind == :AEXPR_ILIKE ? "ILIKE" : "LIKE"
           detection(
-            query,
             table: table,
             columns: column,
             message: "Leading-wildcard #{operator} (#{pattern.inspect}) on #{table}.#{column} cannot use " \
@@ -61,14 +60,14 @@ module PgCanary
         end
 
         # Pattern string from a literal, a cast literal, or a bind parameter.
-        def pattern_value(query, rexpr)
+        def pattern_value(rexpr)
           node = rexpr&.strip_casts
           case node
           when PgQuery::A_Const
             value = node.value
             value.is_a?(String) ? value : nil
           when PgQuery::ParamRef
-            value = query.bind_value(node.number)
+            value = bind_value(node.number)
             value.is_a?(String) ? value : nil
           end
         end

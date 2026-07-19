@@ -13,16 +13,16 @@ module PgCanary
 
       CHECKED_KINDS = %i[AEXPR_OP AEXPR_LIKE AEXPR_ILIKE AEXPR_IN AEXPR_BETWEEN].freeze
 
-      def check(query)
+      def check
         detections = []
-        query.each_scope do |scope|
+        each_scope do |scope|
           next unless scope.where_clause
 
           scope.where_clause.walk_scope do |node|
             next unless node.is_a?(PgQuery::A_Expr) && CHECKED_KINDS.include?(node.kind)
 
             [node.lexpr, node.rexpr].each do |side|
-              detections << inspect_side(query, scope, side)
+              detections << inspect_side(scope, side)
             end
           end
         end
@@ -41,7 +41,7 @@ module PgCanary
           found
         end
 
-        def inspect_side(query, scope, side)
+        def inspect_side(scope, side)
           func = side&.strip_casts
           return nil unless func.is_a?(PgQuery::FuncCall)
 
@@ -50,13 +50,12 @@ module PgCanary
 
           table, column = scope.resolve(column_ref)
           return nil unless table && column
-          return nil unless applicable_table?(query, table)
+          return nil unless applicable_table?(table)
 
           func_name = func.function_name
-          return nil if expression_index?(query, table, column, func_name)
+          return nil if expression_index?(table, column, func_name)
 
           detection(
-            query,
             table: table,
             columns: column,
             message: "#{table}.#{column} is wrapped in #{func_name}() inside WHERE, " \
@@ -71,8 +70,8 @@ module PgCanary
         # Matches by (function name, column name) word match against the index
         # expression SQL — a deliberate approximation that already avoids the
         # common false positives.
-        def expression_index?(query, table, column, func_name)
-          query.indexes(table).any? do |index|
+        def expression_index?(table, column, func_name)
+          indexes(table).any? do |index|
             expressions = index.expressions
             next false unless expressions
 

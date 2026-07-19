@@ -10,15 +10,15 @@ module PgCanary
     class CartesianJoin < Base
       default_enabled true
 
-      def check(query)
+      def check
         detections = []
-        query.each_scope do |scope|
+        each_scope do |scope|
           scope.stmt.from_clause.each do |item|
             each_join(item.unwrap) do |join|
-              detections << join_detection(query, join) if unconditioned?(join)
+              detections << join_detection(join) if unconditioned?(join)
             end
           end
-          detections << comma_detection(query, scope) if comma_cartesian?(scope)
+          detections << comma_detection(scope) if comma_cartesian?(scope)
         end
         detections
       end
@@ -79,19 +79,18 @@ module PgCanary
           found
         end
 
-        def join_detection(query, join)
+        def join_detection(join)
           tables = [join.larg, join.rarg].map(&:unwrap)
                                          .grep(PgQuery::RangeVar).map(&:relname)
-          build(query, tables)
+          build(tables)
         end
 
-        def comma_detection(query, scope)
-          build(query, scope.tables)
+        def comma_detection(scope)
+          build(scope.tables)
         end
 
-        def build(query, tables)
+        def build(tables)
           detection(
-            query,
             table: tables.first,
             message: "JOIN between #{tables.join(" and ")} has no join condition, producing a cross " \
                      "product — the result grows with the product of both tables' row counts.",

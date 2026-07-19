@@ -12,18 +12,17 @@ module PgCanary
       default_enabled false
       option :heavy_types, default: %w[bytea jsonb text].freeze
 
-      def check(query)
-        heavy_types = rule_config(query).heavy_types
+      def check
+        heavy_types = rule_config.heavy_types
         detections = []
-        query.each_scope do |scope|
+        each_scope do |scope|
           star_tables(scope).each do |table|
-            next unless applicable_table?(query, table)
+            next unless applicable_table?(table)
 
-            heavy = query.column_types(table).select { |_, type| heavy_types.include?(type) }.keys
+            heavy = column_types(table).select { |_, type| heavy_types.include?(type) }.keys
             next if heavy.empty?
 
             detections << detection(
-              query,
               table: table,
               columns: heavy,
               message: "SELECT * on #{table} transfers its heavy columns (#{heavy.join(", ")}) " \

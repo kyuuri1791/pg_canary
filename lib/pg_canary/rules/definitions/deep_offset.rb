@@ -12,17 +12,16 @@ module PgCanary
       default_enabled true
       option :threshold, default: 1000
 
-      def check(query)
-        threshold = rule_config(query).threshold
+      def check
+        threshold = rule_config.threshold
         detections = []
-        query.each_scope do |scope|
+        each_scope do |scope|
           next unless scope.stmt.limit_offset
 
-          value = numeric_value(query, scope.stmt.limit_offset)
+          value = numeric_value(scope.stmt.limit_offset)
           next unless value && value >= threshold
 
           detections << detection(
-            query,
             table: scope.tables.length == 1 ? scope.tables.first : nil,
             message: "OFFSET #{value} reads and discards #{value} rows before returning anything — " \
                      "offset pagination degrades linearly with page depth.",
@@ -37,7 +36,7 @@ module PgCanary
 
       private
 
-        def numeric_value(query, node)
+        def numeric_value(node)
           node = node&.strip_casts
           case node
           when PgQuery::A_Const
@@ -45,7 +44,7 @@ module PgCanary
             value.is_a?(Numeric) ? value.to_i : nil
           when PgQuery::ParamRef
             begin
-              Integer(query.bind_value(node.number), exception: false)
+              Integer(bind_value(node.number), exception: false)
             rescue TypeError
               nil
             end

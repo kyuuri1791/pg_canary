@@ -10,21 +10,21 @@ module PgCanary
     class OrAcrossColumns < Base
       default_enabled false
 
-      def check(query)
+      def check
         detections = []
-        query.each_scope do |scope|
+        each_scope do |scope|
           next unless scope.where_clause
 
           seen = []
           scope.where_clause.walk_scope do |node|
             next unless node.is_a?(PgQuery::BoolExpr) && node.boolop == :OR_EXPR
 
-            columns = predicate_columns(query, scope, node)
+            columns = predicate_columns(scope, node)
             next if columns.length < 2
             next if seen.include?(columns)
 
             seen << columns
-            detections << build(query, columns)
+            detections << build(columns)
           end
         end
         detections
@@ -34,7 +34,7 @@ module PgCanary
 
         # Distinct (table, column) pairs among the OR branches' simple
         # column-vs-constant predicates.
-        def predicate_columns(query, scope, bool_expr)
+        def predicate_columns(scope, bool_expr)
           columns = bool_expr.args.filter_map do |arg|
             expr = arg.unwrap
             next nil unless expr.is_a?(PgQuery::A_Expr)
@@ -44,15 +44,14 @@ module PgCanary
             next nil unless column_ref.is_a?(PgQuery::ColumnRef)
 
             resolved = scope.resolve(column_ref)
-            resolved if resolved && applicable_table?(query, resolved.first)
+            resolved if resolved && applicable_table?(resolved.first)
           end
           columns.uniq.sort
         end
 
-        def build(query, columns)
+        def build(columns)
           column_list = columns.map { |table, column| "#{table}.#{column}" }.join(", ")
           detection(
-            query,
             table: columns.first.first,
             columns: columns.map(&:last),
             message: "OR across different columns (#{column_list}) often prevents a single index scan.",

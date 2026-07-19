@@ -13,21 +13,20 @@ module PgCanary
       default_enabled true
       option :threshold, default: 500
 
-      def check(query)
-        threshold = rule_config(query).threshold
+      def check
+        threshold = rule_config.threshold
         detections = []
-        query.each_scope do |scope|
+        each_scope do |scope|
           next unless scope.where_clause
 
           scope.where_clause.walk_scope do |node|
             next unless node.is_a?(PgQuery::A_Expr)
 
-            count = value_count(query, node)
+            count = value_count(node)
             next unless count && count > threshold
 
             table, column = resolve_lexpr(scope, node)
             detections << detection(
-              query,
               table: table,
               columns: column,
               message: "IN / ANY list with #{count} values (threshold: #{threshold}). Huge value lists " \
@@ -42,7 +41,7 @@ module PgCanary
 
       private
 
-        def value_count(query, a_expr)
+        def value_count(a_expr)
           case a_expr.kind
           when :AEXPR_IN
             list = a_expr.rexpr&.unwrap
@@ -51,7 +50,7 @@ module PgCanary
             param = a_expr.rexpr&.strip_casts
             return nil unless param.is_a?(PgQuery::ParamRef)
 
-            value = query.bind_value(param.number)
+            value = bind_value(param.number)
             value.is_a?(Array) ? value.length : nil
           end
         end

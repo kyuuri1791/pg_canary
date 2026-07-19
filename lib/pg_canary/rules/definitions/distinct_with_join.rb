@@ -11,14 +11,13 @@ module PgCanary
     class DistinctWithJoin < Base
       default_enabled false
 
-      def check(query)
+      def check
         detections = []
-        query.each_scope do |scope|
+        each_scope do |scope|
           next unless scope.stmt.distinct_clause.any?
           next unless joined?(scope)
 
           detections << detection(
-            query,
             table: scope.tables.first,
             message: "DISTINCT combined with JOIN often hides row fanout from the join: duplicate rows " \
                      "are produced and then sorted/hashed away.",

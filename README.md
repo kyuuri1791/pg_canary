@@ -32,11 +32,6 @@ end
 | `cartesian_join` | JOIN with no join condition — explicit `CROSS JOIN` between tables, or a comma join never connected in WHERE | The result grows with the product of both tables' row counts |
 | `implicit_cast` | Integer column compared with a numeric literal (`age = 1.5`) | The *column* gets implicitly cast to numeric, disabling its index. Restricted to cases provable from the AST alone |
 
-Notes:
-
-- `deep_offset` and `huge_in_list` read the **runtime bind values** (`OFFSET $1`, array binds) from the `sql.active_record` event — static SQL linters that only see query text cannot do this. `leading_wildcard_like` uses the same mechanism for `LIKE $1`.
-- `function_on_column` matches expression indexes by (function name, column name) — a deliberate approximation rather than full location-insensitive AST equality, which is sufficient in practice
-
 ### Disabled by default
 
 | Rule | Detects |
@@ -88,7 +83,7 @@ Detections show up in a panel at the bottom of the page, each with: the rule nam
 
 ## How it works
 
-pg_canary subscribes to ActiveRecord's `sql.active_record` notifications and analyzes each executed SELECT. Detection is based on the query's AST — parsed with [`pg_query`](https://github.com/pganalyze/pg_query), a binding to PostgreSQL's own parser — combined with schema metadata (index definitions, opclasses, expression indexes, column types) read through ActiveRecord's schema cache. Detections raised during a request are collected by a Rack middleware, which injects the panel into the HTML response.
+pg_canary subscribes to ActiveRecord's `sql.active_record` notifications and analyzes each executed SELECT. Detection is based on the query's AST — parsed with [`pg_query`](https://github.com/pganalyze/pg_query), a binding to PostgreSQL's own parser — combined with schema metadata (index definitions, opclasses, expression indexes, column types) read through ActiveRecord's schema cache. Because analysis happens at query execution time, runtime bind values are visible too — `OFFSET $1` with a bound value of 50000 is still caught, which linters that only see query text cannot do. Detections raised during a request are collected by a Rack middleware, which injects the panel into the HTML response.
 
 ## Development
 

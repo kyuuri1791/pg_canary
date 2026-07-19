@@ -70,7 +70,7 @@ module PgCanary
       end
 
       def check_rule(klass, state)
-        klass.new(**state).check.reject { |d| ignored?(d, state[:scopes]) }
+        klass.check(**state).reject { |d| ignored?(d, state[:scopes]) }
       rescue StandardError => e
         PgCanary.internal_error(e)
         []

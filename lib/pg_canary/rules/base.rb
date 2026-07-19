@@ -43,6 +43,10 @@ module PgCanary
           setting = config.rules[rule_name].enabled
           setting.nil? ? default_enabled : setting
         end
+
+        def check(**state)
+          new(**state).check
+        end
       end
 
       def initialize(sql:, config:, connection:, parse_result:, scopes:, binds: [], type_casted_binds: nil)
